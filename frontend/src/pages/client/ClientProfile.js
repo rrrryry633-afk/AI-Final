@@ -111,6 +111,24 @@ const ClientProfile = () => {
               </div>
             </div>
           </div>
+
+          {/* Quick Links */}
+          <button
+            onClick={() => navigate('/client/rewards')}
+            className="w-full mt-4 p-4 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl flex items-center justify-between hover:border-amber-500/50 transition-all group"
+            data-testid="rewards-link"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center">
+                <Gift className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-white">Rewards Hub</p>
+                <p className="text-xs text-amber-400/70">Bonuses, promos & earnings</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-amber-400 group-hover:translate-x-1 transition-transform" />
+          </button>
         </div>
       </div>
 
