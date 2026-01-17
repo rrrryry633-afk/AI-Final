@@ -4,35 +4,54 @@
  * 
  * Features:
  * - Amount input with quick amounts
- * - Payment method selection
+ * - Payment method selection (fetched from API with tags/instructions)
  * - Proof upload
- * - Info box: "Requires Telegram approval"
+ * - Info box: "Requires 2-5 minutes for approval"
  * - Success state with order ID
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
   Upload, DollarSign, CreditCard, 
   Smartphone, Building2, CheckCircle, Loader2,
-  ArrowLeft, Info, AlertCircle
+  ArrowLeft, Info, AlertCircle, Clock, Tag, FileText
 } from 'lucide-react';
 
 // Centralized API
 import http, { getErrorMessage, isServerUnavailable } from '../../api/http';
 
-const paymentMethods = [
-  { id: 'gcash', name: 'GCash', icon: Smartphone, color: 'blue' },
-  { id: 'paymaya', name: 'PayMaya', icon: Smartphone, color: 'green' },
-  { id: 'bank', name: 'Bank Transfer', icon: Building2, color: 'violet' },
+// Default payment methods (fallback)
+const defaultPaymentMethods = [
+  { method_id: 'gcash', title: 'GCash', icon: 'smartphone', color: 'blue', tags: [], instructions: '' },
+  { method_id: 'paymaya', title: 'PayMaya', icon: 'smartphone', color: 'green', tags: [], instructions: '' },
+  { method_id: 'bank', title: 'Bank Transfer', icon: 'building', color: 'violet', tags: [], instructions: '' },
 ];
+
+const getIcon = (iconType) => {
+  switch(iconType?.toLowerCase()) {
+    case 'smartphone':
+    case 'gcash':
+    case 'paymaya':
+      return Smartphone;
+    case 'building':
+    case 'bank':
+      return Building2;
+    case 'card':
+      return CreditCard;
+    default:
+      return CreditCard;
+  }
+};
 
 const AddFunds = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState(null);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [loadingMethods, setLoadingMethods] = useState(true);
   const [proofImage, setProofImage] = useState(null);
   const [proofPreview, setProofPreview] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -41,6 +60,28 @@ const AddFunds = () => {
   const [error, setError] = useState(null);
 
   const quickAmounts = [20, 50, 100, 200, 500];
+
+  // Fetch payment methods from API
+  const fetchPaymentMethods = useCallback(async () => {
+    setLoadingMethods(true);
+    try {
+      const response = await http.get('/payments/methods');
+      if (response.data.success && response.data.methods?.length > 0) {
+        setPaymentMethods(response.data.methods);
+      } else {
+        setPaymentMethods(defaultPaymentMethods);
+      }
+    } catch (err) {
+      console.error('Failed to fetch payment methods:', err);
+      setPaymentMethods(defaultPaymentMethods);
+    } finally {
+      setLoadingMethods(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPaymentMethods();
+  }, [fetchPaymentMethods]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -79,9 +120,9 @@ const AddFunds = () => {
     try {
       const response = await http.post('/wallet-load/request', {
         amount: parseFloat(amount),
-        payment_method: paymentMethod.toUpperCase(),
+        payment_method: (paymentMethod.method_id || paymentMethod.title).toUpperCase(),
         proof_image: proofImage,
-        notes: `Via ${paymentMethod}`
+        notes: `Via ${paymentMethod.title}`
       });
 
       if (response.data.success) {
@@ -100,6 +141,10 @@ const AddFunds = () => {
     }
   };
 
+  // Get selected method's tags and instructions
+  const selectedTags = paymentMethod?.tags || [];
+  const selectedInstructions = paymentMethod?.instructions || '';
+
   if (success) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
@@ -112,14 +157,14 @@ const AddFunds = () => {
             Your deposit request for ${parseFloat(amount).toFixed(2)} has been submitted.
           </p>
           
-          {/* Telegram approval info */}
+          {/* Approval info */}
           <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-6">
             <div className="flex items-center gap-2 mb-2">
-              <Info className="w-5 h-5 text-amber-400" />
-              <p className="text-amber-400 font-medium text-sm">Awaiting Telegram Approval</p>
+              <Clock className="w-5 h-5 text-amber-400" />
+              <p className="text-amber-400 font-medium text-sm">Processing Your Request</p>
             </div>
             <p className="text-xs text-amber-400/70">
-              An admin will review and approve your deposit via Telegram. This usually takes a few minutes.
+              Your deposit is in queue for review. This usually takes 2-5 minutes.
             </p>
             {orderId && (
               <p className="text-xs text-gray-500 mt-2 font-mono">
@@ -156,14 +201,14 @@ const AddFunds = () => {
       </header>
 
       <main className="px-4 py-6 max-w-lg mx-auto">
-        {/* Telegram Approval Notice */}
+        {/* Approval Notice */}
         <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl mb-6">
           <div className="flex items-center gap-2 mb-1">
-            <Info className="w-5 h-5 text-blue-400" />
-            <p className="text-blue-400 font-medium text-sm">Requires Telegram Approval</p>
+            <Clock className="w-5 h-5 text-blue-400" />
+            <p className="text-blue-400 font-medium text-sm">Requires 2-5 minutes for approval.</p>
           </div>
           <p className="text-xs text-blue-400/70">
-            After submitting, an admin will review and approve your deposit via Telegram.
+            After submitting, your deposit will be on a short queue for review.
           </p>
         </div>
 
@@ -236,31 +281,51 @@ const AddFunds = () => {
               <p className="text-gray-400">Select how you'll pay</p>
             </div>
 
-            <div className="space-y-3">
-              {paymentMethods.map(method => {
-                const Icon = method.icon;
-                return (
-                  <button
-                    key={method.id}
-                    onClick={() => setPaymentMethod(method.id)}
-                    className={`w-full p-4 rounded-2xl border transition-all flex items-center gap-4 ${
-                      paymentMethod === method.id
-                        ? 'bg-violet-500/10 border-violet-500/50'
-                        : 'bg-white/[0.02] border-white/5 hover:border-white/20'
-                    }`}
-                    data-testid={`method-${method.id}`}
-                  >
-                    <div className={`w-12 h-12 rounded-xl bg-${method.color}-500/10 flex items-center justify-center`}>
-                      <Icon className={`w-6 h-6 text-${method.color}-400`} />
-                    </div>
-                    <span className="font-medium text-white">{method.name}</span>
-                    {paymentMethod === method.id && (
-                      <CheckCircle className="w-5 h-5 text-violet-400 ml-auto" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {loadingMethods ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {paymentMethods.map(method => {
+                  const Icon = getIcon(method.icon || method.method_id);
+                  const isSelected = paymentMethod?.method_id === method.method_id;
+                  return (
+                    <button
+                      key={method.method_id}
+                      onClick={() => setPaymentMethod(method)}
+                      className={`w-full p-4 rounded-2xl border transition-all text-left ${
+                        isSelected
+                          ? 'bg-violet-500/10 border-violet-500/50'
+                          : 'bg-white/[0.02] border-white/5 hover:border-white/20'
+                      }`}
+                      data-testid={`method-${method.method_id}`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                          <Icon className="w-6 h-6 text-violet-400" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-medium text-white">{method.title}</span>
+                          {method.tags?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {method.tags.slice(0, 2).map((tag, i) => (
+                                <span key={i} className="text-[10px] px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {isSelected && (
+                          <CheckCircle className="w-5 h-5 text-violet-400" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button
@@ -289,15 +354,45 @@ const AddFunds = () => {
             </div>
 
             {/* Summary */}
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-              <div className="flex justify-between mb-2">
+            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-3">
+              <div className="flex justify-between">
                 <span className="text-gray-400">Amount</span>
                 <span className="font-bold text-white">${parseFloat(amount).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Method</span>
-                <span className="text-white capitalize">{paymentMethod}</span>
+                <span className="text-white">{paymentMethod?.title}</span>
               </div>
+              
+              {/* Payment Tag */}
+              {selectedTags.length > 0 && (
+                <div className="flex justify-between items-start">
+                  <span className="text-gray-400 flex items-center gap-1">
+                    <Tag className="w-3.5 h-3.5" />
+                    Payment tag
+                  </span>
+                  <div className="flex flex-wrap gap-1 justify-end max-w-[60%]">
+                    {selectedTags.map((tag, i) => (
+                      <span key={i} className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Note / Instructions */}
+              {selectedInstructions && (
+                <div className="pt-2 border-t border-white/5">
+                  <div className="flex items-start gap-2">
+                    <FileText className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                    <div>
+                      <span className="text-amber-400 text-xs font-medium">Note</span>
+                      <p className="text-gray-300 text-sm mt-0.5">{selectedInstructions}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Upload Area */}
