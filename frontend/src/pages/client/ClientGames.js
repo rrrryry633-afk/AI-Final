@@ -311,22 +311,29 @@ const ClientGames = () => {
   );
 };
 
-// Game Card Component
+// Game Card Component with Credentials Vault
 const GameCard = ({ game, account, onCreateAccount, onLoad, onRedeem, processing }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState(null);
 
-  const copyCredentials = () => {
-    if (account) {
-      const text = `Username: ${account.game_username}\nPassword: ${account.game_password}`;
-      navigator.clipboard.writeText(text).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }).catch(() => {
-        // Fallback
-        toast.error('Could not copy to clipboard');
-      });
+  // Auto-hide password after 15 seconds
+  useEffect(() => {
+    if (showPassword) {
+      const timer = setTimeout(() => {
+        setShowPassword(false);
+      }, 15000);
+      return () => clearTimeout(timer);
     }
+  }, [showPassword]);
+
+  const copyToClipboard = (text, field) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      toast.success(`${field} copied!`);
+      setTimeout(() => setCopiedField(null), 2000);
+    }).catch(() => {
+      toast.error('Could not copy to clipboard');
+    });
   };
 
   return (
@@ -356,32 +363,71 @@ const GameCard = ({ game, account, onCreateAccount, onLoad, onRedeem, processing
       <div className="p-4">
         {account ? (
           <>
-            {/* Account Credentials */}
-            <div className="p-3 bg-white/[0.02] rounded-xl mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-500">Username</span>
-                <span className="text-sm font-mono text-white">{account.game_username || 'N/A'}</span>
+            {/* Credentials Vault */}
+            <div className="p-4 bg-gradient-to-br from-violet-900/20 to-fuchsia-900/20 border border-violet-500/20 rounded-xl mb-4" data-testid={`credentials-vault-${game.game_name}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <Eye className="w-4 h-4 text-violet-400" />
+                <span className="text-xs font-medium text-violet-400">Credentials Vault</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Password</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-mono text-white">
+              
+              {/* Username */}
+              <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg mb-2">
+                <div>
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wide">Username</span>
+                  <p className="text-sm font-mono text-white">{account.game_username || 'N/A'}</p>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(account.game_username, 'Username')}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  data-testid={`copy-username-${game.game_name}`}
+                >
+                  {copiedField === 'Username' ? (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              
+              {/* Password */}
+              <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg">
+                <div className="flex-1">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wide">Password</span>
+                  <p className="text-sm font-mono text-white">
                     {showPassword ? (account.game_password || 'N/A') : '••••••••'}
-                  </span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => setShowPassword(!showPassword)}
-                    className="p-1 text-gray-400 hover:text-white"
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    data-testid={`toggle-password-${game.game_name}`}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4 text-amber-400" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-gray-400" />
+                    )}
                   </button>
                   <button
-                    onClick={copyCredentials}
-                    className="p-1 text-gray-400 hover:text-white"
+                    onClick={() => copyToClipboard(account.game_password, 'Password')}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    data-testid={`copy-password-${game.game_name}`}
                   >
-                    {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                    {copiedField === 'Password' ? (
+                      <Check className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-gray-400" />
+                    )}
                   </button>
                 </div>
               </div>
+              
+              {/* Warning */}
+              <p className="text-[10px] text-amber-400/60 mt-2 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                Keep your credentials private
+              </p>
             </div>
 
             {/* Action Buttons */}
