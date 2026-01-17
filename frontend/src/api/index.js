@@ -13,18 +13,33 @@ export {
   API_V1 
 } from './http';
 
-// Endpoint Collections
+// Client API Endpoints
 export {
   authApi,
   walletApi,
   transactionsApi,
-  gamesApi,
+  gamesApi as clientGamesApi,
   referralsApi,
   rewardsApi,
   portalApi,
-  adminApi,
-  adminSystemApi,
 } from './endpoints';
+
+// Admin API Endpoints
+export {
+  default as adminApi,
+  dashboardApi,
+  usersApi,
+  ordersApi,
+  approvalsApi,
+  systemApi,
+  settingsApi,
+  gamesApi as adminGamesApi,
+  perksApi,
+  promoCodesApi,
+  reportsApi,
+  auditApi,
+  balanceControlApi,
+} from './admin';
 
 // Safe fetch helpers
 export {
