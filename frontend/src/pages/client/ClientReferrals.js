@@ -419,9 +419,9 @@ const ClientReferrals = () => {
               <div>
                 <h4 className="text-sm font-semibold text-white mb-1">How referral works</h4>
                 <p className="text-xs text-gray-400 leading-relaxed">
-                  Referral code is validated via our Messenger (Chatwoot).
+                  Referral code can be validated via our Messenger.
                   <br />
-                  Tell your friend to send your referral code to our Messenger after signup to activate rewards.
+                  Tell your friend to send your referral code to our Messenger to start earning.
                 </p>
               </div>
             </div>
