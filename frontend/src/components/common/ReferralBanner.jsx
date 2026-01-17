@@ -36,10 +36,10 @@ export const ReferralBanner = ({ className = '' }) => {
           <div className="text-left">
             <div className="flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-amber-300" />
-              <span className="text-xs font-medium text-amber-200">Earn Rewards</span>
+              <span className="text-xs font-medium text-amber-200">Earn Cash</span>
             </div>
             <h3 className="text-base font-bold text-white">Invite Friends & Earn</h3>
-            <p className="text-xs text-white/70">Get 10% of their first deposit</p>
+            <p className="text-xs text-white/70">Get 50% of their first deposit</p>
           </div>
         </div>
         <div className="flex items-center gap-1 text-white/90 group-hover:translate-x-1 transition-transform">
