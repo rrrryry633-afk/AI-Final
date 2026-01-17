@@ -31,6 +31,7 @@ import AddFunds from './pages/client/AddFunds';
 import Withdraw from './pages/client/Withdraw';
 import TransactionDetail from './pages/client/TransactionDetail';
 import ClientReferrals from './pages/client/ClientReferrals';
+import ClientRewards from './pages/client/ClientRewards';
 
 // ================== PORTAL COMPAT (Magic Link) ==================
 import PortalLanding from './pages/portal/PortalLanding';
