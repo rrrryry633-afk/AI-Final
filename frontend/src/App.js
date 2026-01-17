@@ -126,6 +126,10 @@ function App() {
               <ClientGuard><ClientReferrals /></ClientGuard>
             } />
             
+            <Route path="/client/rewards" element={
+              <ClientGuard><ClientRewards /></ClientGuard>
+            } />
+            
             <Route path="/client/profile" element={
               <ClientGuard><ClientProfile /></ClientGuard>
             } />
