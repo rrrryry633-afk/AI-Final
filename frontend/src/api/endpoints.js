@@ -45,6 +45,9 @@ export const walletApi = {
   getLoadHistory: () => 
     http.get('/wallet/load-history'),
   
+  getLedger: () =>
+    http.get('/wallet/ledger'),
+  
   getQrCodes: () => 
     http.get('/wallet/qr'),
   
