@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { 
   Gift,
   Plus, ArrowUpRight, ArrowDownLeft, ChevronRight,
-  Copy, Check, Sparkles, Clock
+  Copy, Check, Sparkles, Clock, Gamepad2, Users
 } from 'lucide-react';
 
 // New centralized API imports
