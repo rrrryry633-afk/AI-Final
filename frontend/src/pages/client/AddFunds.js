@@ -144,6 +144,24 @@ const AddFunds = () => {
   // Get selected method's tags and instructions
   const selectedTags = paymentMethod?.tags || [];
   const selectedInstructions = paymentMethod?.instructions || '';
+  
+  // QR Code state
+  const [showQr, setShowQr] = useState(false);
+  const [qrData, setQrData] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
+
+  const fetchQrCode = async () => {
+    setQrLoading(true);
+    try {
+      const res = await http.get('/wallet/qr');
+      setQrData(res.data);
+      setShowQr(true);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'QR code not available'));
+    } finally {
+      setQrLoading(false);
+    }
+  };
 
   if (success) {
     return (
@@ -158,7 +176,7 @@ const AddFunds = () => {
           </p>
           
           {/* Approval info */}
-          <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-6">
+          <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-4">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="w-5 h-5 text-amber-400" />
               <p className="text-amber-400 font-medium text-sm">Processing Your Request</p>
@@ -172,6 +190,63 @@ const AddFunds = () => {
               </p>
             )}
           </div>
+
+          {/* QR Code Section */}
+          <div className="space-y-3 mb-6">
+            <button
+              onClick={fetchQrCode}
+              disabled={qrLoading}
+              className="w-full py-3 bg-white/10 hover:bg-white/15 text-white font-medium rounded-xl transition-all flex items-center justify-center gap-2"
+              data-testid="show-qr-btn"
+            >
+              {qrLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <QrCode className="w-4 h-4" />
+                  Show Payment QR
+                </>
+              )}
+            </button>
+            
+            <button
+              onClick={() => navigate('/client/wallet?tab=deposits')}
+              className="w-full py-3 bg-white/5 hover:bg-white/10 text-gray-300 font-medium rounded-xl transition-all flex items-center justify-center gap-2"
+              data-testid="view-deposits-btn"
+            >
+              <History className="w-4 h-4" />
+              View Deposit History
+            </button>
+          </div>
+
+          {/* QR Modal */}
+          {showQr && qrData && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" onClick={() => setShowQr(false)}>
+              <div className="bg-[#12121a] border border-white/10 rounded-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-bold text-white mb-4 text-center">Payment QR Code</h3>
+                {qrData.qr_image ? (
+                  <img src={qrData.qr_image} alt="Payment QR" className="w-48 h-48 mx-auto rounded-xl bg-white p-2" />
+                ) : qrData.qr_data ? (
+                  <div className="w-48 h-48 mx-auto bg-white/10 rounded-xl flex items-center justify-center">
+                    <p className="text-xs text-gray-400 text-center px-4 break-all">{qrData.qr_data}</p>
+                  </div>
+                ) : (
+                  <div className="w-48 h-48 mx-auto bg-white/5 rounded-xl flex items-center justify-center">
+                    <p className="text-gray-500 text-sm">QR not available</p>
+                  </div>
+                )}
+                <p className="text-xs text-gray-400 text-center mt-4">
+                  Scan & pay. Deposit will be credited after approval.
+                </p>
+                <button
+                  onClick={() => setShowQr(false)}
+                  className="w-full mt-4 py-2 bg-white/10 text-white rounded-xl"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
           
           <button
             onClick={() => navigate('/client/wallet')}
