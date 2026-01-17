@@ -311,14 +311,26 @@ const ClientReferrals = () => {
           className="relative overflow-hidden rounded-3xl"
           data-testid="referral-hero"
         >
-          <div className="bg-gradient-to-br from-violet-600 via-fuchsia-600 to-emerald-500 p-6">
+          <div className="bg-gradient-to-br from-violet-600 via-fuchsia-600 to-emerald-500 p-5">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-white mb-2">
-                Turn Your Network Into Rewards
+              <h2 className="text-2xl font-bold text-white mb-1">
+                Turn Your Network Into Earnings
               </h2>
-              <p className="text-white/80 text-sm mb-6 max-w-md mx-auto">
-                Earn bonuses every time your friends deposit and play.
+              <p className="text-white/80 text-sm mb-3 max-w-md mx-auto">
+                Earn upto 30% Life-time your friends deposit and play.
               </p>
+              
+              {/* Highlight line */}
+              <p className="text-amber-300 font-bold text-base mb-3">
+                💰 Earn 30% Cash Lifetime
+              </p>
+              
+              {/* Tagline */}
+              <div className="mb-4">
+                <p className="text-white font-semibold text-sm">Invite Friends & Earn</p>
+                <p className="text-white/70 text-xs">Get 50% of their first deposit</p>
+              </div>
+              
               <button
                 onClick={handleCopyLink}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white text-violet-600 font-semibold rounded-xl hover:bg-white/95 hover:shadow-lg transition-all"
