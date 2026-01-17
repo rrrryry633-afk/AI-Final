@@ -1,19 +1,28 @@
-import React, { useEffect, useState } from 'react';
+/**
+ * ClientHome - Client Dashboard
+ * Route: /client/home
+ * 
+ * Phase 7: Updated with unified design system
+ * - Referral banner prominently placed below wallet card
+ * - Consistent card styling
+ * - Unified button components
+ */
+
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { 
-  Gift,
-  Plus, ArrowUpRight, ArrowDownLeft, ChevronRight,
-  Copy, Check, Sparkles, Clock, Gamepad2, Users
+  Gift, Plus, ArrowUpRight, ArrowDownLeft, ChevronRight,
+  Copy, Check, Clock, Gamepad2
 } from 'lucide-react';
 
-// New centralized API imports
+// Centralized API
 import { walletApi, transactionsApi, rewardsApi, getErrorMessage } from '../../api';
 import { ClientBottomNav } from '../../features/shared/ClientBottomNav';
 import { PageLoader } from '../../features/shared/LoadingStates';
+import { ReferralBanner } from '../../components/common/ReferralBanner';
 
-// Client Home Page
 const ClientHome = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -23,13 +32,8 @@ const ClientHome = () => {
   const [hasWelcomeCredit, setHasWelcomeCredit] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      // Use new centralized API - auth headers are automatically injected
       const [walletRes, ordersRes, creditRes] = await Promise.all([
         walletApi.getBalance(),
         transactionsApi.getOrderHistory(5).catch(() => ({ data: { orders: [] } })),
@@ -41,7 +45,6 @@ const ClientHome = () => {
       setHasWelcomeCredit(creditRes.data.has_credit || false);
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      // Set default data to prevent crashes
       setWalletData({
         wallet_balance: 0,
         play_credits: 0,
@@ -51,14 +54,18 @@ const ClientHome = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const claimWelcomeCredit = async () => {
     try {
       const res = await rewardsApi.claimWelcomeCredit();
       toast.success(res.data.message || 'Welcome credit claimed!');
       setHasWelcomeCredit(false);
-      fetchData(); // Refresh wallet
+      fetchData();
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to claim credit'));
     }
@@ -68,6 +75,7 @@ const ClientHome = () => {
     const code = user?.referral_code || 'DEMO2024';
     navigator.clipboard.writeText(code).then(() => {
       setCopied(true);
+      toast.success('Referral code copied!');
       setTimeout(() => setCopied(false), 2000);
     });
   };
@@ -79,9 +87,9 @@ const ClientHome = () => {
   const totalBalance = walletData?.wallet_balance || walletData?.real_balance || 0;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-20" data-testid="client-home">
+    <div className="min-h-screen bg-[#0a0a0f] pb-24" data-testid="client-home">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#0a0a0f]/90 backdrop-blur-xl border-b border-white/5">
+      <header className="sticky top-0 z-40 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/5">
         <div className="px-4 py-4 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500">Welcome back,</p>
@@ -89,18 +97,19 @@ const ClientHome = () => {
           </div>
           <button 
             onClick={() => navigate('/client/profile')}
-            className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold"
+            className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold shadow-lg shadow-violet-500/20"
+            data-testid="profile-btn"
           >
             {(user?.display_name || user?.username || 'P')[0].toUpperCase()}
           </button>
         </div>
       </header>
 
-      <main className="px-4 py-6 space-y-6">
+      <main className="px-4 py-6 space-y-5">
         {/* Welcome Credit Banner */}
         {hasWelcomeCredit && (
           <div 
-            className="relative overflow-hidden p-4 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl animate-pulse-slow"
+            className="relative overflow-hidden p-4 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl"
             data-testid="welcome-credit-banner"
           >
             <div className="flex items-center justify-between">
@@ -126,11 +135,11 @@ const ClientHome = () => {
 
         {/* Balance Card */}
         <div 
-          className="relative overflow-hidden p-6 bg-gradient-to-br from-violet-900/40 via-fuchsia-900/30 to-violet-900/40 border border-violet-500/20 rounded-3xl"
+          className="relative overflow-hidden p-6 bg-gradient-to-br from-violet-900/40 via-fuchsia-900/30 to-violet-900/40 border border-violet-500/20 rounded-3xl shadow-xl"
           data-testid="balance-card"
         >
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-5">
+          {/* Background Glow */}
+          <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-40 h-40 bg-violet-500 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 w-40 h-40 bg-fuchsia-500 rounded-full blur-3xl" />
           </div>
@@ -143,19 +152,19 @@ const ClientHome = () => {
             
             {/* Balance Breakdown */}
             <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-white/5 rounded-xl p-3">
+              <div className="bg-white/5 backdrop-blur rounded-xl p-3">
                 <p className="text-xs text-gray-500 mb-1">Cash</p>
                 <p className="text-sm font-semibold text-emerald-400">
                   ${(walletData?.cash_balance || 0).toFixed(2)}
                 </p>
               </div>
-              <div className="bg-white/5 rounded-xl p-3">
+              <div className="bg-white/5 backdrop-blur rounded-xl p-3">
                 <p className="text-xs text-gray-500 mb-1">Play Credits</p>
                 <p className="text-sm font-semibold text-violet-400">
                   ${(walletData?.play_credits || 0).toFixed(2)}
                 </p>
               </div>
-              <div className="bg-white/5 rounded-xl p-3">
+              <div className="bg-white/5 backdrop-blur rounded-xl p-3">
                 <p className="text-xs text-gray-500 mb-1">Bonus</p>
                 <p className="text-sm font-semibold text-amber-400">
                   ${(walletData?.bonus_balance || 0).toFixed(2)}
@@ -175,7 +184,7 @@ const ClientHome = () => {
               </button>
               <button
                 onClick={() => navigate('/client/wallet/withdraw')}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white/10 hover:bg-white/15 text-white font-semibold rounded-xl transition-all"
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white/10 hover:bg-white/15 text-white font-semibold rounded-xl transition-all border border-white/5"
                 data-testid="withdraw-btn"
               >
                 <ArrowUpRight className="w-5 h-5" />
@@ -185,32 +194,28 @@ const ClientHome = () => {
           </div>
         </div>
 
-        {/* Quick Actions Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => navigate('/client/games')}
-            className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] hover:border-violet-500/30 transition-all text-left group"
-            data-testid="games-action"
-          >
-            <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <Gamepad2 className="w-6 h-6 text-violet-400" />
-            </div>
-            <h3 className="font-semibold text-white mb-1">My Games</h3>
-            <p className="text-xs text-gray-500">Load & manage games</p>
-          </button>
+        {/* REFERRAL BANNER - HIGH PRIORITY PLACEMENT */}
+        <ReferralBanner />
 
-          <button
-            onClick={() => navigate('/client/referrals')}
-            className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] hover:border-violet-500/30 transition-all text-left group"
-            data-testid="referrals-action"
-          >
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <Users className="w-6 h-6 text-emerald-400" />
+        {/* Games Quick Action */}
+        <button
+          onClick={() => navigate('/client/games')}
+          className="w-full p-5 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] hover:border-violet-500/30 transition-all text-left group"
+          data-testid="games-action"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Gamepad2 className="w-6 h-6 text-violet-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white mb-0.5">My Games</h3>
+                <p className="text-xs text-gray-500">Load credits & manage accounts</p>
+              </div>
             </div>
-            <h3 className="font-semibold text-white mb-1">Referrals</h3>
-            <p className="text-xs text-gray-500">Earn bonus credits</p>
-          </button>
-        </div>
+            <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
+          </div>
+        </button>
 
         {/* Referral Code Card */}
         <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
@@ -241,7 +246,7 @@ const ClientHome = () => {
             <h3 className="font-semibold text-white">Recent Activity</h3>
             <button
               onClick={() => navigate('/client/wallet')}
-              className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1"
+              className="text-sm text-violet-400 hover:text-violet-300 flex items-center gap-1 transition-colors"
             >
               View All
               <ChevronRight className="w-4 h-4" />
@@ -257,9 +262,10 @@ const ClientHome = () => {
           ) : (
             <div className="space-y-2">
               {recentOrders.slice(0, 5).map(order => (
-                <div
+                <button
                   key={order.order_id}
-                  className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-xl"
+                  onClick={() => navigate(`/client/wallet/transaction/${order.order_id}`)}
+                  className="w-full flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-white/[0.04] transition-all text-left"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
@@ -278,7 +284,7 @@ const ClientHome = () => {
                         {order.order_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Transaction'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {order.game_name?.toUpperCase() || order.status}
+                        {order.game_name?.toUpperCase() || order.status?.replace(/_/g, ' ')}
                       </p>
                     </div>
                   </div>
@@ -301,14 +307,13 @@ const ClientHome = () => {
                       {order.status?.replace(/_/g, ' ')}
                     </p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
         </div>
       </main>
 
-      {/* Bottom Navigation - Using shared component */}
       <ClientBottomNav active="home" />
     </div>
   );
