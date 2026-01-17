@@ -168,20 +168,13 @@ const Login = () => {
           </button>
         </div>
 
-        <div className="mt-4 text-center">
-          <p className="text-gray-500 text-xs">
-            Don't have an account? Sign up to get started!
-          </p>
-        </div>
-
-        {/* Test credentials */}
-        <div className="mt-4 p-3 bg-white/[0.02] border border-white/5 rounded-xl space-y-1">
-          <p className="text-gray-500 text-xs text-center">
-            Test Client: <code className="text-violet-400">testclient</code> / <code className="text-violet-400">test12345</code>
-          </p>
-          <p className="text-gray-500 text-xs text-center">
-            Test Admin: <code className="text-violet-400">admin</code> / <code className="text-violet-400">admin123</code>
-          </p>
+        {/* 30% Referral Offer Banner */}
+        <div className="mt-6 p-4 bg-gradient-to-r from-violet-600/20 via-fuchsia-600/20 to-emerald-500/20 border border-violet-500/30 rounded-xl">
+          <div className="text-center">
+            <p className="text-amber-400 font-bold text-lg mb-1">💰 Earn 30% Cash Lifetime</p>
+            <p className="text-white/80 text-sm">Invite friends & earn 30% of their deposits forever!</p>
+            <p className="text-gray-400 text-xs mt-2">Sign up now to get your referral code</p>
+          </div>
         </div>
       </div>
     </div>
