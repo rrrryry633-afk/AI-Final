@@ -119,6 +119,9 @@ export const rewardsApi = {
   redeemPromo: (code) => 
     http.post('/portal/promo/redeem', { code }),
   
+  getPromoHistory: () =>
+    http.get('/portal/promo/history'),
+  
   getWelcomeCredit: () => 
     http.get('/portal/credits/welcome'),
   
