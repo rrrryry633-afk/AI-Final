@@ -364,32 +364,37 @@ const AddFunds = () => {
                 <span className="text-white">{paymentMethod?.title}</span>
               </div>
               
-              {/* Payment Tag */}
+              {/* Payment Tag - Account to pay to */}
               {selectedTags.length > 0 && (
-                <div className="flex justify-between items-start">
-                  <span className="text-gray-400 flex items-center gap-1">
-                    <Tag className="w-3.5 h-3.5" />
-                    Payment tag
-                  </span>
-                  <div className="flex flex-wrap gap-1 justify-end max-w-[60%]">
-                    {selectedTags.map((tag, i) => (
-                      <span key={i} className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">
-                        {tag}
-                      </span>
-                    ))}
+                <div className="pt-3 border-t border-white/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Tag className="w-4 h-4 text-emerald-400" />
+                    <span className="text-emerald-400 text-xs font-medium">Payment Tag</span>
+                  </div>
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
+                    <p className="text-emerald-300 font-mono font-semibold text-base">
+                      {selectedTags[0]}
+                    </p>
+                    {selectedTags.length > 1 && (
+                      <p className="text-emerald-400/60 text-xs mt-1">
+                        Alt: {selectedTags.slice(1).join(', ')}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
               
-              {/* Note / Instructions */}
+              {/* Note - What to write in remarks */}
               {selectedInstructions && (
-                <div className="pt-2 border-t border-white/5">
-                  <div className="flex items-start gap-2">
-                    <FileText className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-                    <div>
-                      <span className="text-amber-400 text-xs font-medium">Note</span>
-                      <p className="text-gray-300 text-sm mt-0.5">{selectedInstructions}</p>
-                    </div>
+                <div className="pt-3 border-t border-white/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-4 h-4 text-amber-400" />
+                    <span className="text-amber-400 text-xs font-medium">Note</span>
+                  </div>
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
+                    <p className="text-amber-300 text-sm">
+                      Please write <span className="font-mono font-semibold">"{selectedInstructions}"</span> in remarks
+                    </p>
                   </div>
                 </div>
               )}
