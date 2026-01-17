@@ -1,54 +1,64 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
+/**
+ * AdminSettings - System Settings Management
+ * 
+ * Features:
+ * - General settings
+ * - Referral tier configuration
+ * - Bonus milestones
+ * - Anti-fraud settings
+ */
+
+import React, { useEffect, useState, useCallback } from 'react';
+import { toast } from 'sonner';
 import { 
   Settings, Users, Gift, Shield, Save, RefreshCw, Plus, Trash2, 
   Edit2, X, AlertTriangle, Check, Percent, Target, Award, Lock,
-  MessageCircle, Clock, UserCheck, DollarSign
+  DollarSign
 } from 'lucide-react';
 
-import { API_BASE } from "../../utils/api";
+// Centralized Admin API
+import { settingsApi, getErrorMessage } from '../../api';
 
 const AdminSettings = () => {
-  const { token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [settings, setSettings] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
   
   // Edit modals
   const [showTierModal, setShowTierModal] = useState(false);
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
-  const [showGreetingModal, setShowGreetingModal] = useState(false);
   const [editingTier, setEditingTier] = useState(null);
   const [editingMilestone, setEditingMilestone] = useState(null);
-  const [editingGreeting, setEditingGreeting] = useState(null);
 
-  const config = { headers: { Authorization: `Bearer ${token}` } };
-
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await axios.get(`API_BASE}/api/v1/admin/settings`, config);
+      const response = await settingsApi.get();
       setSettings(response.data);
-    } catch (error) {
-      console.error('Failed to fetch settings:', error);
+    } catch (err) {
+      const message = getErrorMessage(err, 'Failed to fetch settings');
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const saveGlobalSettings = async (updates) => {
     setSaving(true);
     try {
-      await axios.put(`API_BASE}/api/v1/admin/settings`, updates, config);
+      await settingsApi.update(updates);
       await fetchSettings();
-      alert('Settings saved successfully');
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to save settings');
+      toast.success('Settings saved successfully');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to save settings'));
     } finally {
       setSaving(false);
     }
@@ -57,12 +67,13 @@ const AdminSettings = () => {
   const saveTiers = async (tiers) => {
     setSaving(true);
     try {
-      await axios.put(`API_BASE}/api/v1/admin/settings`, { referral_tiers: tiers }, config);
+      await settingsApi.updateReferralTiers(tiers);
       await fetchSettings();
       setShowTierModal(false);
       setEditingTier(null);
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to save tiers');
+      toast.success('Referral tiers updated');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to save tiers'));
     } finally {
       setSaving(false);
     }
@@ -71,22 +82,24 @@ const AdminSettings = () => {
   const deleteTier = async (tierNumber) => {
     if (!window.confirm('Delete this tier?')) return;
     try {
-      await axios.put(`API_BASE}/api/v1/admin/settings`, { remove_tier: tierNumber }, config);
+      await settingsApi.removeTier(tierNumber);
       await fetchSettings();
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to delete tier');
+      toast.success('Tier deleted');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete tier'));
     }
   };
 
   const saveMilestones = async (milestones) => {
     setSaving(true);
     try {
-      await axios.put(`API_BASE}/api/v1/admin/settings`, { bonus_milestones: milestones }, config);
+      await settingsApi.updateBonusMilestones(milestones);
       await fetchSettings();
       setShowMilestoneModal(false);
       setEditingMilestone(null);
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to save milestones');
+      toast.success('Milestones updated');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to save milestones'));
     } finally {
       setSaving(false);
     }
@@ -95,123 +108,73 @@ const AdminSettings = () => {
   const saveAntifraud = async (updates) => {
     setSaving(true);
     try {
-      await axios.put(`API_BASE}/api/v1/admin/settings`, { anti_fraud: updates }, config);
+      await settingsApi.updateAntiFraud(updates);
       await fetchSettings();
-      alert('Anti-fraud settings saved');
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to save');
+      toast.success('Anti-fraud settings saved');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to save anti-fraud settings'));
     } finally {
       setSaving(false);
     }
   };
 
-  const saveActiveReferralCriteria = async (criteria) => {
-    setSaving(true);
-    try {
-      await axios.put(`API_BASE}/admin/settings/active-referral-criteria`, criteria, config);
-      await fetchSettings();
-      alert('Active referral criteria saved');
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to save');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveGreetingSettings = async (greetingConfig) => {
-    setSaving(true);
-    try {
-      await axios.put(`API_BASE}/admin/settings/first-time-greeting`, greetingConfig, config);
-      await fetchSettings();
-      alert('Greeting settings saved');
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to save');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const addGreetingMessage = async (message) => {
-    try {
-      await axios.post(`API_BASE}/admin/settings/first-time-greeting/messages`, message, config);
-      await fetchSettings();
-      setShowGreetingModal(false);
-      setEditingGreeting(null);
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to add message');
-    }
-  };
-
-  const deleteGreetingMessage = async (order) => {
-    if (!window.confirm('Delete this greeting message?')) return;
-    try {
-      await axios.delete(`API_BASE}/admin/settings/first-time-greeting/messages/${order}`, config);
-      await fetchSettings();
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to delete');
-    }
-  };
-
-  const resetToDefaults = async (section = 'all') => {
-    if (!window.confirm(`Reset ${section} settings to defaults?`)) return;
-    try {
-      await axios.post(`API_BASE}/admin/settings/reset-defaults?section=${section}`, {}, config);
-      await fetchSettings();
-      alert('Settings reset to defaults');
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Failed to reset');
-    }
-  };
+  const tabs = [
+    { id: 'general', label: 'General', icon: Settings },
+    { id: 'referrals', label: 'Referrals', icon: Users },
+    { id: 'bonuses', label: 'Bonuses', icon: Gift },
+    { id: 'antifraud', label: 'Anti-Fraud', icon: Shield },
+  ];
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-emerald-500 animate-spin" />
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
       </div>
     );
   }
 
-  const tiers = settings?.referral_tier_config?.tiers || [];
-  const milestones = settings?.bonus_rules?.milestones || [];
-  const antifraud = settings?.anti_fraud || {};
-  const activeRefCriteria = settings?.active_referral_criteria || {};
-  const greetingConfig = settings?.first_time_greeting || {};
-
-  const tabs = [
-    { id: 'general', label: 'General', icon: Settings },
-    { id: 'tiers', label: 'Commission Tiers', icon: Users },
-    { id: 'milestones', label: 'Bonus Milestones', icon: Gift },
-    { id: 'active-referral', label: 'Active Referral', icon: UserCheck },
-    { id: 'greeting', label: 'First Message', icon: MessageCircle },
-    { id: 'antifraud', label: 'Anti-Fraud', icon: Shield },
-  ];
+  if (error && !settings) {
+    return (
+      <div className="p-8 text-center">
+        <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+        <p className="text-red-400 mb-4">{error}</p>
+        <button
+          onClick={fetchSettings}
+          className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6" data-testid="admin-settings">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Platform Settings</h1>
-          <p className="text-gray-400 text-sm">Configure referral system, bonuses, and platform behavior</p>
+          <h1 className="text-2xl font-bold text-white">System Settings</h1>
+          <p className="text-gray-400 text-sm">Configure platform behavior</p>
         </div>
         <button
-          onClick={() => resetToDefaults('all')}
-          className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition flex items-center gap-2"
+          onClick={fetchSettings}
+          disabled={loading}
+          className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
         >
-          <RefreshCw className="w-4 h-4" />
-          Reset All
+          <RefreshCw className={`w-5 h-5 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-800 pb-2">
+      <div className="flex gap-2 border-b border-gray-800 pb-2">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-emerald-500 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                ? 'bg-violet-500/20 text-violet-400'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800'
             }`}
           >
             <tab.icon className="w-4 h-4" />
@@ -220,560 +183,286 @@ const AdminSettings = () => {
         ))}
       </div>
 
-      {/* Tab Content */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        
-        {/* GENERAL TAB */}
-        {activeTab === 'general' && (
-          <div className="space-y-6">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Settings className="w-5 h-5 text-emerald-400" />
-              General Settings
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <label className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                  <span className="text-white">Automation Enabled</span>
-                  <input
-                    type="checkbox"
-                    checked={settings?.automation_enabled || false}
-                    onChange={(e) => saveGlobalSettings({ automation_enabled: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-600 text-emerald-500 focus:ring-emerald-500"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                  <span className="text-white">Withdrawals Enabled</span>
-                  <input
-                    type="checkbox"
-                    checked={settings?.withdrawals_enabled || false}
-                    onChange={(e) => saveGlobalSettings({ withdrawals_enabled: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-600 text-emerald-500 focus:ring-emerald-500"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                  <span className="text-white">Bonus System Enabled</span>
-                  <input
-                    type="checkbox"
-                    checked={settings?.bonus_system_enabled || false}
-                    onChange={(e) => saveGlobalSettings({ bonus_system_enabled: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-600 text-emerald-500 focus:ring-emerald-500"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                  <span className="text-white">Referral System Enabled</span>
-                  <input
-                    type="checkbox"
-                    checked={settings?.referral_system_enabled || false}
-                    onChange={(e) => saveGlobalSettings({ referral_system_enabled: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-600 text-emerald-500 focus:ring-emerald-500"
-                  />
-                </label>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-800 rounded-lg">
-                  <label className="text-white text-sm mb-2 block">Min Withdrawal Amount</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400">$</span>
-                    <input
-                      type="number"
-                      value={settings?.min_withdrawal_amount || 20}
-                      onChange={(e) => saveGlobalSettings({ min_withdrawal_amount: parseFloat(e.target.value) })}
-                      className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-4 bg-gray-800 rounded-lg">
-                  <label className="text-white text-sm mb-2 block">Max Withdrawal Amount</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400">$</span>
-                    <input
-                      type="number"
-                      value={settings?.max_withdrawal_amount || 10000}
-                      onChange={(e) => saveGlobalSettings({ max_withdrawal_amount: parseFloat(e.target.value) })}
-                      className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TIERS TAB */}
-        {activeTab === 'tiers' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-emerald-400" />
-                Commission Tiers (Up to 30%)
-              </h2>
-              <button
-                onClick={() => {
-                  setEditingTier(null);
-                  setShowTierModal(true);
-                }}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Tier
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {tiers.map((tier, idx) => (
-                <div
-                  key={tier.tier_number}
-                  className={`p-4 rounded-lg border ${
-                    idx === 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gray-800 border-gray-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        tier.commission_percentage >= 25 ? 'bg-purple-500' :
-                        tier.commission_percentage >= 20 ? 'bg-amber-500' :
-                        tier.commission_percentage >= 15 ? 'bg-slate-400' :
-                        tier.commission_percentage >= 10 ? 'bg-amber-600' :
-                        'bg-gray-600'
-                      }`}>
-                        <span className="text-white font-bold">{tier.tier_number}</span>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-bold">{tier.name}</h4>
-                        <p className="text-gray-400 text-sm">
-                          {tier.min_referrals === 0 ? 'Base tier' : `${tier.min_referrals}+ active referrals`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-emerald-400">{tier.commission_percentage}%</p>
-                        <p className="text-gray-500 text-xs">commission</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setEditingTier(tier);
-                            setShowTierModal(true);
-                          }}
-                          className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
-                        >
-                          <Edit2 className="w-4 h-4 text-gray-300" />
-                        </button>
-                        {tier.tier_number > 0 && (
-                          <button
-                            onClick={() => deleteTier(tier.tier_number)}
-                            className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-400" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* MILESTONES TAB */}
-        {activeTab === 'milestones' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Gift className="w-5 h-5 text-purple-400" />
-                Bonus Milestones
-              </h2>
-              <button
-                onClick={() => {
-                  setEditingMilestone(null);
-                  setShowMilestoneModal(true);
-                }}
-                className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Milestone
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {milestones.map((milestone) => (
-                <div
-                  key={milestone.milestone_number}
-                  className="p-4 bg-gray-800 border border-gray-700 rounded-lg"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center">
-                        <Award className="w-6 h-6 text-purple-400" />
-                      </div>
-                      <div>
-                        <h4 className="text-white font-bold">{milestone.referrals_required} Referrals</h4>
-                        <p className="text-gray-400 text-sm">{milestone.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-purple-400">+${milestone.bonus_amount.toFixed(2)}</p>
-                        <p className="text-gray-500 text-xs">bonus</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setEditingMilestone(milestone);
-                            setShowMilestoneModal(true);
-                          }}
-                          className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
-                        >
-                          <Edit2 className="w-4 h-4 text-gray-300" />
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (window.confirm('Delete this milestone?')) {
-                              try {
-                                await axios.delete(`API_BASE}/admin/settings/bonus-milestones/${milestone.milestone_number}`, config);
-                                await fetchSettings();
-                              } catch (err) {
-                                alert('Failed to delete');
-                              }
-                            }
-                          }}
-                          className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-400" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ACTIVE REFERRAL CRITERIA TAB */}
-        {activeTab === 'active-referral' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <UserCheck className="w-5 h-5 text-emerald-400" />
-                Active Referral Criteria
-              </h2>
-            </div>
-
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
-              <p className="text-blue-300 text-sm">
-                <strong>Active Referral Definition:</strong> A referral is considered "active" when they meet ALL of the criteria below.
-                Only active referrals count towards commission tiers and bonus milestones.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <label className="text-white text-sm mb-2 block flex items-center gap-2">
-                  <Target className="w-4 h-4 text-emerald-400" />
-                  Minimum Number of Deposits
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={activeRefCriteria.min_deposits_required || 1}
-                  onChange={(e) => saveActiveReferralCriteria({ min_deposits_required: parseInt(e.target.value) })}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-emerald-500"
-                />
-                <p className="text-gray-500 text-xs mt-1">Referral must make at least this many deposits</p>
-              </div>
-
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <label className="text-white text-sm mb-2 block flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-emerald-400" />
-                  Minimum Total Deposit Amount
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={activeRefCriteria.min_total_deposit_amount || 10}
-                    onChange={(e) => saveActiveReferralCriteria({ min_total_deposit_amount: parseFloat(e.target.value) })}
-                    className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-                <p className="text-gray-500 text-xs mt-1">Total deposits must be at least this amount</p>
-              </div>
-
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <label className="text-white text-sm mb-2 block flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-amber-400" />
-                  Activity Window (Days)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={activeRefCriteria.activity_window_days || 30}
-                  onChange={(e) => saveActiveReferralCriteria({ activity_window_days: parseInt(e.target.value) })}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-emerald-500"
-                />
-                <p className="text-gray-500 text-xs mt-1">Deposits must be within the last X days</p>
-              </div>
-
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <label className="flex items-center justify-between">
-                  <span className="text-white text-sm flex items-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-400" />
-                    Require Recent Activity
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={activeRefCriteria.require_recent_activity || false}
-                    onChange={(e) => saveActiveReferralCriteria({ require_recent_activity: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-600 text-emerald-500 focus:ring-emerald-500"
-                  />
-                </label>
-                <p className="text-gray-500 text-xs mt-2">If enabled, referral must have activity within the window</p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-              <h4 className="text-emerald-400 font-bold mb-2">Current Criteria Summary:</h4>
-              <p className="text-gray-300 text-sm">
-                A referral is <span className="text-emerald-400 font-bold">ACTIVE</span> when they have made 
-                <span className="text-white font-bold"> {activeRefCriteria.min_deposits_required || 1}+ deposit(s)</span>, 
-                totaling at least <span className="text-white font-bold">${(activeRefCriteria.min_total_deposit_amount || 10).toFixed(2)}</span>, 
-                within the last <span className="text-white font-bold">{activeRefCriteria.activity_window_days || 30} days</span>.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* FIRST-TIME GREETING TAB */}
-        {activeTab === 'greeting' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-blue-400" />
-                First-Time Client Greeting
-              </h2>
-              <button
-                onClick={() => {
-                  setEditingGreeting(null);
-                  setShowGreetingModal(true);
-                }}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Message
-              </button>
-            </div>
-
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
-              <p className="text-blue-300 text-sm">
-                <strong>First Contact:</strong> These messages are sent when a new client messages your Messenger for the first time.
-                Use this to greet them and ask for their referral code if they have one.
-              </p>
-            </div>
-
-            {/* Enable/Disable */}
-            <div className="p-4 bg-gray-800 rounded-lg">
-              <label className="flex items-center justify-between">
-                <span className="text-white font-medium">Enable First-Time Greeting</span>
-                <input
-                  type="checkbox"
-                  checked={greetingConfig.enabled || false}
-                  onChange={(e) => saveGreetingSettings({ enabled: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500"
-                />
-              </label>
-            </div>
-
-            {/* Ask for Referral Code */}
-            <div className="p-4 bg-gray-800 rounded-lg">
-              <label className="flex items-center justify-between mb-3">
-                <span className="text-white font-medium">Ask for Referral Code</span>
-                <input
-                  type="checkbox"
-                  checked={greetingConfig.ask_referral_code || false}
-                  onChange={(e) => saveGreetingSettings({ ask_referral_code: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500"
-                />
-              </label>
-              {greetingConfig.ask_referral_code && (
-                <div className="mt-3">
-                  <label className="text-gray-400 text-sm mb-2 block">Referral Code Prompt</label>
-                  <input
-                    type="text"
-                    value={greetingConfig.referral_code_prompt || ''}
-                    onChange={(e) => saveGreetingSettings({ referral_code_prompt: e.target.value })}
-                    className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
-                    placeholder="Please enter your referral code, or type 'SKIP'..."
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Messages List */}
-            <div className="space-y-3">
-              <h3 className="text-white font-medium">Greeting Messages (in order)</h3>
-              {(greetingConfig.messages || []).length === 0 ? (
-                <div className="text-center py-8 bg-gray-800 rounded-lg">
-                  <MessageCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-400">No greeting messages configured</p>
-                  <p className="text-gray-500 text-sm">Add messages to greet first-time clients</p>
-                </div>
-              ) : (
-                (greetingConfig.messages || []).map((msg, idx) => (
-                  <div
-                    key={msg.order}
-                    className="p-4 bg-gray-800 border border-gray-700 rounded-lg"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-blue-400 font-bold text-sm">{msg.order}</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white">{msg.message}</p>
-                          <p className="text-gray-500 text-xs mt-1">
-                            Delay: {msg.delay_seconds || 0}s after previous
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => deleteGreetingMessage(msg.order)}
-                        className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ANTI-FRAUD TAB */}
-        {activeTab === 'antifraud' && (
-          <div className="space-y-6">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Shield className="w-5 h-5 text-red-400" />
-              Anti-Fraud Settings
-            </h2>
-
-            <div className="p-4 bg-gray-800 rounded-lg">
-              <label className="flex items-center justify-between">
-                <span className="text-white font-medium">Enable Anti-Fraud Detection</span>
-                <input
-                  type="checkbox"
-                  checked={antifraud.enabled || false}
-                  onChange={(e) => saveAntifraud({ enabled: e.target.checked })}
-                  className="w-5 h-5 rounded border-gray-600 text-red-500 focus:ring-red-500"
-                />
-              </label>
-            </div>
-
+      {/* General Settings */}
+      {activeTab === 'general' && settings && (
+        <div className="space-y-6">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+            <h3 className="text-lg font-medium text-white">Platform Settings</h3>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <label className="text-white text-sm mb-2 block">Max Referrals Per IP</label>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Min Deposit Amount</label>
                 <input
                   type="number"
-                  value={antifraud.max_referrals_per_ip || 3}
-                  onChange={(e) => saveAntifraud({ max_referrals_per_ip: parseInt(e.target.value) })}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600"
+                  defaultValue={settings.min_deposit || 10}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  onBlur={(e) => saveGlobalSettings({ min_deposit: Number(e.target.value) })}
                 />
               </div>
-
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <label className="text-white text-sm mb-2 block">IP Cooldown (Hours)</label>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Max Deposit Amount</label>
                 <input
                   type="number"
-                  value={antifraud.ip_cooldown_hours || 24}
-                  onChange={(e) => saveAntifraud({ ip_cooldown_hours: parseInt(e.target.value) })}
-                  className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600"
+                  defaultValue={settings.max_deposit || 1000}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  onBlur={(e) => saveGlobalSettings({ max_deposit: Number(e.target.value) })}
                 />
               </div>
-
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <label className="text-white text-sm mb-2 block">Min Deposit for Valid Referral</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400">$</span>
-                  <input
-                    type="number"
-                    value={antifraud.min_deposit_for_valid_referral || 10}
-                    onChange={(e) => saveAntifraud({ min_deposit_for_valid_referral: parseFloat(e.target.value) })}
-                    className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Min Withdrawal Amount</label>
+                <input
+                  type="number"
+                  defaultValue={settings.min_withdrawal || 20}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  onBlur={(e) => saveGlobalSettings({ min_withdrawal: Number(e.target.value) })}
+                />
               </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Max Withdrawal Amount</label>
+                <input
+                  type="number"
+                  defaultValue={settings.max_withdrawal || 500}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  onBlur={(e) => saveGlobalSettings({ max_withdrawal: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <label className="flex items-center justify-between">
-                  <span className="text-white text-sm">Auto-Flag Suspicious</span>
+      {/* Referral Settings */}
+      {activeTab === 'referrals' && settings && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-white">Referral Tiers</h3>
+            <button
+              onClick={() => { setEditingTier(null); setShowTierModal(true); }}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm"
+            >
+              <Plus className="w-4 h-4" /> Add Tier
+            </button>
+          </div>
+          
+          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            {(!settings.referral_tiers || settings.referral_tiers.length === 0) ? (
+              <div className="p-8 text-center text-gray-500">
+                <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                No referral tiers configured
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-800">
+                    <th className="text-left text-gray-400 text-xs font-medium py-3 px-4">Tier</th>
+                    <th className="text-left text-gray-400 text-xs font-medium py-3 px-4">Min Referrals</th>
+                    <th className="text-left text-gray-400 text-xs font-medium py-3 px-4">Bonus Rate</th>
+                    <th className="text-right text-gray-400 text-xs font-medium py-3 px-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {settings.referral_tiers.map((tier, idx) => (
+                    <tr key={idx} className="border-b border-gray-800/50">
+                      <td className="py-3 px-4 text-white">Tier {tier.tier_number || idx + 1}</td>
+                      <td className="py-3 px-4 text-gray-300">{tier.min_referrals}</td>
+                      <td className="py-3 px-4 text-emerald-400">{tier.bonus_rate}%</td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => { setEditingTier(tier); setShowTierModal(true); }}
+                          className="p-1 text-gray-400 hover:text-white mr-2"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteTier(tier.tier_number || idx + 1)}
+                          className="p-1 text-gray-400 hover:text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bonus Settings */}
+      {activeTab === 'bonuses' && settings && (
+        <div className="space-y-6">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+            <h3 className="text-lg font-medium text-white">Welcome Bonus</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Welcome Bonus Amount</label>
+                <input
+                  type="number"
+                  defaultValue={settings.welcome_bonus_amount || 5}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  onBlur={(e) => saveGlobalSettings({ welcome_bonus_amount: Number(e.target.value) })}
+                />
+              </div>
+              <div className="flex items-center">
+                <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={antifraud.auto_flag_suspicious || false}
-                    onChange={(e) => saveAntifraud({ auto_flag_suspicious: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-600 text-red-500"
+                    defaultChecked={settings.welcome_bonus_enabled}
+                    className="w-5 h-5 rounded bg-gray-800 border-gray-700"
+                    onChange={(e) => saveGlobalSettings({ welcome_bonus_enabled: e.target.checked })}
                   />
+                  <span className="text-gray-300">Enable Welcome Bonus</span>
                 </label>
               </div>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* TIER MODAL */}
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-white">Bonus Milestones</h3>
+            <button
+              onClick={() => { setEditingMilestone(null); setShowMilestoneModal(true); }}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm"
+            >
+              <Plus className="w-4 h-4" /> Add Milestone
+            </button>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            {(!settings.bonus_milestones || settings.bonus_milestones.length === 0) ? (
+              <div className="p-8 text-center text-gray-500">
+                <Award className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                No bonus milestones configured
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-800">
+                    <th className="text-left text-gray-400 text-xs font-medium py-3 px-4">Milestone</th>
+                    <th className="text-left text-gray-400 text-xs font-medium py-3 px-4">Target</th>
+                    <th className="text-left text-gray-400 text-xs font-medium py-3 px-4">Reward</th>
+                    <th className="text-right text-gray-400 text-xs font-medium py-3 px-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {settings.bonus_milestones.map((milestone, idx) => (
+                    <tr key={idx} className="border-b border-gray-800/50">
+                      <td className="py-3 px-4 text-white">{milestone.name || `Milestone ${idx + 1}`}</td>
+                      <td className="py-3 px-4 text-gray-300">${milestone.target_amount}</td>
+                      <td className="py-3 px-4 text-emerald-400">${milestone.reward_amount}</td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => { setEditingMilestone(milestone); setShowMilestoneModal(true); }}
+                          className="p-1 text-gray-400 hover:text-white mr-2"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const updated = settings.bonus_milestones.filter((_, i) => i !== idx);
+                            saveMilestones(updated);
+                          }}
+                          className="p-1 text-gray-400 hover:text-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Anti-Fraud Settings */}
+      {activeTab === 'antifraud' && settings && (
+        <div className="space-y-6">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+            <h3 className="text-lg font-medium text-white flex items-center gap-2">
+              <Shield className="w-5 h-5 text-red-400" />
+              Anti-Fraud Configuration
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Max Daily Deposits</label>
+                <input
+                  type="number"
+                  defaultValue={settings.anti_fraud?.max_daily_deposits || 5}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  onBlur={(e) => saveAntifraud({ max_daily_deposits: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Max Daily Withdrawals</label>
+                <input
+                  type="number"
+                  defaultValue={settings.anti_fraud?.max_daily_withdrawals || 3}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  onBlur={(e) => saveAntifraud({ max_daily_withdrawals: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Suspicious Amount Threshold</label>
+                <input
+                  type="number"
+                  defaultValue={settings.anti_fraud?.suspicious_threshold || 1000}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                  onBlur={(e) => saveAntifraud({ suspicious_threshold: Number(e.target.value) })}
+                />
+              </div>
+              <div className="flex items-center">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    defaultChecked={settings.anti_fraud?.require_proof}
+                    className="w-5 h-5 rounded bg-gray-800 border-gray-700"
+                    onChange={(e) => saveAntifraud({ require_proof: e.target.checked })}
+                  />
+                  <span className="text-gray-300">Require Payment Proof</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tier Modal */}
       {showTierModal && (
         <TierModal
           tier={editingTier}
-          existingTiers={tiers}
-          onSave={async (tier) => {
-            const newTiers = editingTier
-              ? tiers.map(t => t.tier_number === editingTier.tier_number ? tier : t)
-              : [...tiers, tier];
-            await saveTiers(newTiers);
+          onSave={(tier) => {
+            const tiers = [...(settings.referral_tiers || [])];
+            if (editingTier) {
+              const idx = tiers.findIndex(t => t.tier_number === editingTier.tier_number);
+              if (idx >= 0) tiers[idx] = tier;
+            } else {
+              tiers.push({ ...tier, tier_number: tiers.length + 1 });
+            }
+            saveTiers(tiers);
           }}
-          onClose={() => {
-            setShowTierModal(false);
-            setEditingTier(null);
-          }}
+          onClose={() => { setShowTierModal(false); setEditingTier(null); }}
         />
       )}
 
-      {/* MILESTONE MODAL */}
+      {/* Milestone Modal */}
       {showMilestoneModal && (
         <MilestoneModal
           milestone={editingMilestone}
-          existingMilestones={milestones}
-          onSave={async (milestone) => {
-            const newMilestones = editingMilestone
-              ? milestones.map(m => m.milestone_number === editingMilestone.milestone_number ? milestone : m)
-              : [...milestones, milestone];
-            await saveMilestones(newMilestones);
+          onSave={(milestone) => {
+            const milestones = [...(settings.bonus_milestones || [])];
+            if (editingMilestone) {
+              const idx = milestones.findIndex(m => m.milestone_number === editingMilestone.milestone_number);
+              if (idx >= 0) milestones[idx] = milestone;
+            } else {
+              milestones.push({ ...milestone, milestone_number: milestones.length + 1 });
+            }
+            saveMilestones(milestones);
           }}
-          onClose={() => {
-            setShowMilestoneModal(false);
-            setEditingMilestone(null);
-          }}
-        />
-      )}
-
-      {/* GREETING MODAL */}
-      {showGreetingModal && (
-        <GreetingModal
-          onSave={addGreetingMessage}
-          onClose={() => {
-            setShowGreetingModal(false);
-            setEditingGreeting(null);
-          }}
+          onClose={() => { setShowMilestoneModal(false); setEditingMilestone(null); }}
         />
       )}
     </div>
@@ -781,58 +470,56 @@ const AdminSettings = () => {
 };
 
 // Tier Modal Component
-const TierModal = ({ tier, existingTiers, onSave, onClose }) => {
-  const [formData, setFormData] = useState({
-    tier_number: tier?.tier_number ?? existingTiers.length,
-    name: tier?.name || '',
+const TierModal = ({ tier, onSave, onClose }) => {
+  const [form, setForm] = useState({
+    tier_number: tier?.tier_number || 1,
     min_referrals: tier?.min_referrals || 0,
-    commission_percentage: tier?.commission_percentage || 5
+    bonus_rate: tier?.bonus_rate || 10,
   });
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-md mx-4 p-6">
-        <h3 className="text-lg font-bold text-white mb-4">
-          {tier ? 'Edit Tier' : 'Add New Tier'}
-        </h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 w-full max-w-md">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-white">
+            {tier ? 'Edit Tier' : 'Add Tier'}
+          </h3>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
         <div className="space-y-4">
           <div>
-            <label className="text-gray-400 text-sm block mb-1">Tier Name</label>
+            <label className="block text-sm text-gray-400 mb-2">Minimum Referrals</label>
             <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-600"
-              placeholder="e.g., Gold"
+              type="number"
+              value={form.min_referrals}
+              onChange={(e) => setForm({ ...form, min_referrals: Number(e.target.value) })}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
             />
           </div>
           <div>
-            <label className="text-gray-400 text-sm block mb-1">Min Active Referrals</label>
+            <label className="block text-sm text-gray-400 mb-2">Bonus Rate (%)</label>
             <input
               type="number"
-              value={formData.min_referrals}
-              onChange={(e) => setFormData({...formData, min_referrals: parseInt(e.target.value)})}
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-600"
-            />
-          </div>
-          <div>
-            <label className="text-gray-400 text-sm block mb-1">Commission Percentage (%)</label>
-            <input
-              type="number"
-              value={formData.commission_percentage}
-              onChange={(e) => setFormData({...formData, commission_percentage: parseFloat(e.target.value)})}
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-600"
-              max={30}
+              value={form.bonus_rate}
+              onChange={(e) => setForm({ ...form, bonus_rate: Number(e.target.value) })}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
             />
           </div>
         </div>
+        
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 py-2 bg-gray-800 text-gray-300 rounded-lg">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+          >
             Cancel
           </button>
           <button
-            onClick={() => onSave(formData)}
-            className="flex-1 py-2 bg-emerald-500 text-white rounded-lg"
+            onClick={() => onSave(form)}
+            className="flex-1 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-500"
           >
             Save
           </button>
@@ -843,110 +530,68 @@ const TierModal = ({ tier, existingTiers, onSave, onClose }) => {
 };
 
 // Milestone Modal Component
-const MilestoneModal = ({ milestone, existingMilestones, onSave, onClose }) => {
-  const [formData, setFormData] = useState({
-    milestone_number: milestone?.milestone_number ?? existingMilestones.length + 1,
-    referrals_required: milestone?.referrals_required || 5,
-    bonus_amount: milestone?.bonus_amount || 5,
-    bonus_type: milestone?.bonus_type || 'bonus',
-    description: milestone?.description || ''
+const MilestoneModal = ({ milestone, onSave, onClose }) => {
+  const [form, setForm] = useState({
+    name: milestone?.name || '',
+    target_amount: milestone?.target_amount || 100,
+    reward_amount: milestone?.reward_amount || 10,
   });
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-md mx-4 p-6">
-        <h3 className="text-lg font-bold text-white mb-4">
-          {milestone ? 'Edit Milestone' : 'Add Milestone'}
-        </h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 w-full max-w-md">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-white">
+            {milestone ? 'Edit Milestone' : 'Add Milestone'}
+          </h3>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
         <div className="space-y-4">
           <div>
-            <label className="text-gray-400 text-sm block mb-1">Referrals Required</label>
-            <input
-              type="number"
-              value={formData.referrals_required}
-              onChange={(e) => setFormData({...formData, referrals_required: parseInt(e.target.value)})}
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-600"
-            />
-          </div>
-          <div>
-            <label className="text-gray-400 text-sm block mb-1">Bonus Amount ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.bonus_amount}
-              onChange={(e) => setFormData({...formData, bonus_amount: parseFloat(e.target.value)})}
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-600"
-            />
-          </div>
-          <div>
-            <label className="text-gray-400 text-sm block mb-1">Description</label>
+            <label className="block text-sm text-gray-400 mb-2">Name</label>
             <input
               type="text"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-600"
-              placeholder="e.g., First milestone bonus"
-            />
-          </div>
-        </div>
-        <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 py-2 bg-gray-800 text-gray-300 rounded-lg">
-            Cancel
-          </button>
-          <button
-            onClick={() => onSave(formData)}
-            className="flex-1 py-2 bg-purple-500 text-white rounded-lg"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Greeting Modal Component
-const GreetingModal = ({ onSave, onClose }) => {
-  const [formData, setFormData] = useState({
-    message: '',
-    delay_seconds: 1
-  });
-
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-md mx-4 p-6">
-        <h3 className="text-lg font-bold text-white mb-4">Add Greeting Message</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="text-gray-400 text-sm block mb-1">Message</label>
-            <textarea
-              value={formData.message}
-              onChange={(e) => setFormData({...formData, message: e.target.value})}
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-600 h-24"
-              placeholder="Enter your greeting message..."
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+              placeholder="e.g., First Deposit Bonus"
             />
           </div>
           <div>
-            <label className="text-gray-400 text-sm block mb-1">Delay After Previous (seconds)</label>
+            <label className="block text-sm text-gray-400 mb-2">Target Amount ($)</label>
             <input
               type="number"
-              min="0"
-              value={formData.delay_seconds}
-              onChange={(e) => setFormData({...formData, delay_seconds: parseInt(e.target.value)})}
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-600"
+              value={form.target_amount}
+              onChange={(e) => setForm({ ...form, target_amount: Number(e.target.value) })}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Reward Amount ($)</label>
+            <input
+              type="number"
+              value={form.reward_amount}
+              onChange={(e) => setForm({ ...form, reward_amount: Number(e.target.value) })}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
             />
           </div>
         </div>
+        
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 py-2 bg-gray-800 text-gray-300 rounded-lg">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+          >
             Cancel
           </button>
           <button
-            onClick={() => onSave(formData)}
-            disabled={!formData.message.trim()}
-            className="flex-1 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50"
+            onClick={() => onSave(form)}
+            className="flex-1 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-500"
           >
-            Add Message
+            Save
           </button>
         </div>
       </div>
