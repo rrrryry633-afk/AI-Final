@@ -418,6 +418,25 @@ const ClientReferrals = () => {
           </div>
         </section>
 
+        {/* Chatwoot Validation Notice */}
+        <section data-testid="chatwoot-notice">
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Info className="w-4 h-4 text-blue-400" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-white mb-1">How referral works</h4>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Referral code is validated via our Messenger (Chatwoot).
+                  <br />
+                  Tell your friend to send your referral code to our Messenger after signup to activate rewards.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Referral Progress Section */}
         <section data-testid="referral-progress">
           <div className="flex items-center justify-between mb-4">
