@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { 
   Upload, DollarSign, CreditCard, 
   Smartphone, Building2, CheckCircle, Loader2,
-  ArrowLeft, Info, AlertCircle, Clock, Tag, FileText
+  ArrowLeft, Info, AlertCircle, Clock, Tag, FileText, QrCode, History
 } from 'lucide-react';
 
 // Centralized API
