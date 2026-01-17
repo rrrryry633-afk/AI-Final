@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { 
-  User, Mail, Lock, Eye, EyeOff, LogOut, Save, Shield
+  User, Mail, Lock, Eye, EyeOff, LogOut, Save, Shield, Gift, ChevronRight
 } from 'lucide-react';
 
 // New centralized API imports
