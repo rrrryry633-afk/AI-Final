@@ -153,10 +153,26 @@ const AdminApprovals = () => {
     </Card>
   );
 
-  if (loading) {
+  // Loading State
+  if (loading && pendingDeposits.length === 0 && pendingWithdrawals.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-8 h-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  // Error State
+  if (error && pendingDeposits.length === 0 && pendingWithdrawals.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <p className="text-red-400 mb-4">{error}</p>
+          <Button onClick={fetchPending} variant="outline">
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }
