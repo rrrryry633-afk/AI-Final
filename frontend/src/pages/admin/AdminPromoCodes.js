@@ -420,14 +420,9 @@ const AdminPromoCodes = () => {
                               <Ban className="w-4 h-4" />
                             </button>
                           ) : (
-                            <button
-                              onClick={() => showConfirmation('enable', code.code_id, code.code)}
-                              className="p-1.5 hover:bg-gray-800 rounded text-gray-400 hover:text-emerald-400 transition"
-                              title="Enable"
-                              data-testid={`enable-${code.code_id}`}
-                            >
-                              <Power className="w-4 h-4" />
-                            </button>
+                            <span className="p-1.5 text-gray-600" title="Cannot re-enable (one-time disable)">
+                              <Ban className="w-4 h-4" />
+                            </span>
                           )}
                         </div>
                       </td>
