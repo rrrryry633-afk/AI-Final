@@ -160,6 +160,7 @@ function App() {
               <Route path="rules" element={<AdminRulesEngine />} />
               <Route path="referrals" element={<AdminReferrals />} />
               <Route path="promo-codes" element={<AdminPromoCodes />} />
+              <Route path="promo-codes/:codeId" element={<AdminPromoDetail />} />
               <Route path="balance-control" element={<AdminBalanceControl />} />
               <Route path="reports" element={<AdminReports />} />
               <Route path="system" element={<AdminSystem />} />
