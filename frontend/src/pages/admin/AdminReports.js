@@ -1,18 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { API_BASE } from '../../utils/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { 
   BarChart3, RefreshCw, DollarSign, TrendingUp, Ban, Gamepad2, 
-  AlertTriangle, Shield, PieChart, Activity 
+  AlertTriangle, Shield, PieChart, Activity, AlertCircle
 } from 'lucide-react';
 
+// Centralized Admin API
+import { reportsApi, analyticsApi, getErrorMessage } from '../../api/admin';
+
 const AdminReports = () => {
-  const { token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [balanceFlow, setBalanceFlow] = useState(null);
   const [profitByGame, setProfitByGame] = useState([]);
   const [voids, setVoids] = useState(null);
@@ -21,43 +22,69 @@ const AdminReports = () => {
 
   const activeTab = searchParams.get('tab') || 'flow';
 
-  useEffect(() => {
-    fetchReports();
-  }, [token]);
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      const [flowRes, gameRes, voidRes, riskRes, advRes] = await Promise.all([
-        fetch(`${API_BASE}/api/v1/admin/reports/balance-flow?days=30`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE}/api/v1/admin/reports/profit-by-game`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE}/api/v1/admin/reports/voids?days=30`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE}/api/v1/admin/analytics/risk-exposure`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE}/api/v1/admin/analytics/advanced-metrics?days=30`, { headers: { Authorization: `Bearer ${token}` } })
+      const [flowRes, gameRes, voidRes, riskRes, advRes] = await Promise.allSettled([
+        reportsApi.getBalanceFlow(30),
+        reportsApi.getProfitByGame(),
+        reportsApi.getVoids(30),
+        analyticsApi.getRiskExposure(),
+        analyticsApi.getAdvancedMetrics()
       ]);
-      if (flowRes.ok) setBalanceFlow(await flowRes.json());
-      if (gameRes.ok) {
-        const data = await gameRes.json();
-        setProfitByGame(data.by_game || []);
+      
+      if (flowRes.status === 'fulfilled') setBalanceFlow(flowRes.value.data);
+      if (gameRes.status === 'fulfilled') setProfitByGame(gameRes.value.data.by_game || []);
+      if (voidRes.status === 'fulfilled') setVoids(voidRes.value.data);
+      if (riskRes.status === 'fulfilled') setRiskExposure(riskRes.value.data);
+      if (advRes.status === 'fulfilled') setAdvancedMetrics(advRes.value.data);
+      
+      // Set error only if all failed
+      const allFailed = [flowRes, gameRes, voidRes, riskRes, advRes].every(r => r.status === 'rejected');
+      if (allFailed) {
+        setError('Failed to load reports');
       }
-      if (voidRes.ok) setVoids(await voidRes.json());
-      if (riskRes.ok) setRiskExposure(await riskRes.json());
-      if (advRes.ok) setAdvancedMetrics(await advRes.json());
     } catch (err) {
       console.error('Failed to fetch reports:', err);
+      setError(getErrorMessage(err, 'Failed to load reports'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   const handleTabChange = (value) => {
     setSearchParams({ tab: value });
   };
 
-  if (loading) {
+  // Loading State
+  if (loading && !balanceFlow && profitByGame.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-8 h-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  // Error State
+  if (error && !balanceFlow && profitByGame.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <p className="text-red-400 mb-4">{error}</p>
+          <button 
+            onClick={fetchReports}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
