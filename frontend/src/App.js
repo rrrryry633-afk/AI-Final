@@ -47,6 +47,7 @@ import AdminGames from './pages/admin/AdminGames';
 import AdminRulesEngine from './pages/admin/AdminRulesEngine';
 import AdminReferrals from './pages/admin/AdminReferrals';
 import AdminPromoCodes from './pages/admin/AdminPromoCodes';
+import AdminPromoDetail from './pages/admin/AdminPromoDetail';
 import AdminReports from './pages/admin/AdminReports';
 import AdminSystem from './pages/admin/AdminSystem';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs';
