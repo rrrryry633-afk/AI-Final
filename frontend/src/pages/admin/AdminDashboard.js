@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { Card, CardContent } from '../../components/ui/card';
 import { 
   CheckSquare, 
@@ -8,50 +7,63 @@ import {
   ArrowDownRight,
   TrendingUp,
   Users,
-  AlertTriangle,
   Star,
   Sparkles,
   ChevronRight,
   RefreshCw,
-  Ban,
   Shield,
-  Zap
+  Zap,
+  AlertCircle
 } from 'lucide-react';
 import RiskSnapshotCards from '../../components/analytics/RiskSnapshotCards';
 import PlatformTrendChart from '../../components/analytics/PlatformTrendChart';
 
-const API = process.env.REACT_APP_BACKEND_URL;
+// Centralized Admin API
+import { dashboardApi, referralsApi, getErrorMessage } from '../../api/admin';
 
 /**
  * ADMIN DASHBOARD - REDESIGNED WITH ANALYTICS
  * Focus: Action Required → Money Flow → Platform Trend → Risk & Exposure → Growth
- * Layered analytics approach
+ * Uses centralized admin API client
  */
 
 const AdminDashboard = () => {
-  const { token } = useAuth();
   const [data, setData] = useState(null);
   const [referralData, setReferralData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [token]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      const [dashRes, refRes] = await Promise.all([
-        fetch(`${API}/api/v1/admin/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/api/v1/admin/referrals/dashboard`, { headers: { Authorization: `Bearer ${token}` } })
+      const [dashRes, refRes] = await Promise.allSettled([
+        dashboardApi.getDashboard(),
+        referralsApi.getDashboard()
       ]);
-      if (dashRes.ok) setData(await dashRes.json());
-      if (refRes.ok) setReferralData(await refRes.json());
+      
+      if (dashRes.status === 'fulfilled') {
+        setData(dashRes.value.data);
+      } else {
+        console.error('Dashboard fetch failed:', dashRes.reason);
+        setError(getErrorMessage(dashRes.reason, 'Failed to load dashboard data'));
+      }
+      
+      if (refRes.status === 'fulfilled') {
+        setReferralData(refRes.value.data);
+      }
     } catch (err) {
       console.error('Dashboard fetch error:', err);
+      setError(getErrorMessage(err, 'Failed to load dashboard'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (loading) {
     return (
