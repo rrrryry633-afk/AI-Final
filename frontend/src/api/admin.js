@@ -379,6 +379,7 @@ export const balanceControlApi = {
 const adminApi = {
   dashboard: dashboardApi,
   users: usersApi,
+  analytics: analyticsApi,
   orders: ordersApi,
   approvals: approvalsApi,
   system: systemApi,
