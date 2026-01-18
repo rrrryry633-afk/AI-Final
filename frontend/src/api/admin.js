@@ -126,6 +126,16 @@ export const ordersApi = {
 // APPROVALS (Wallet Loads, Withdrawals)
 // ============================================
 export const approvalsApi = {
+  // Get all pending items
+  getPending: (orderType = null) => {
+    const query = orderType ? `?order_type=${orderType}` : '';
+    return http.get(`/admin/approvals/pending${query}`);
+  },
+  
+  // Perform action on an order
+  performAction: (orderId, action, reason = '') =>
+    http.post(`/admin/approvals/${orderId}/action`, { action, reason: reason || undefined }),
+  
   // Wallet Loads
   getPendingLoads: () =>
     http.get('/admin/approvals/wallet-loads'),
