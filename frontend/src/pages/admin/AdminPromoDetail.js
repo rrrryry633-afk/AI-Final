@@ -205,7 +205,7 @@ const AdminPromoDetail = () => {
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
-          {promoCode.is_active ? (
+          {promoCode.is_active && (
             <Button 
               onClick={() => showConfirmation('disable')}
               variant="outline"
@@ -214,16 +214,6 @@ const AdminPromoDetail = () => {
             >
               <Ban className="w-4 h-4 mr-2" />
               Disable
-            </Button>
-          ) : (
-            <Button 
-              onClick={() => showConfirmation('enable')}
-              variant="outline"
-              size="sm"
-              className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
-            >
-              <Power className="w-4 h-4 mr-2" />
-              Enable
             </Button>
           )}
         </div>
