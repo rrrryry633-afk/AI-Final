@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { API_BASE } from '../../utils/api';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
@@ -15,8 +13,12 @@ import {
   User,
   DollarSign,
   RefreshCw,
-  Eye
+  Eye,
+  AlertCircle
 } from 'lucide-react';
+
+// Centralized Admin API
+import { approvalsApi, getErrorMessage } from '../../api/admin';
 
 /**
  * APPROVALS PAGE
@@ -24,44 +26,51 @@ import {
  */
 
 const AdminApprovals = () => {
-  const { token } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [pendingDeposits, setPendingDeposits] = useState([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [processing, setProcessing] = useState(false);
 
-  useEffect(() => {
-    fetchPending();
-  }, [token]);
-
-  const fetchPending = async () => {
+  const fetchPending = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      const [depositsRes, withdrawalsRes] = await Promise.all([
-        fetch(`${API_BASE}/api/v1/admin/approvals/pending?order_type=deposit`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        fetch(`${API_BASE}/api/v1/admin/approvals/pending?order_type=withdrawal`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+      const [depositsRes, withdrawalsRes] = await Promise.allSettled([
+        approvalsApi.getPending('deposit'),
+        approvalsApi.getPending('withdrawal')
       ]);
 
-      if (depositsRes.ok) {
-        const data = await depositsRes.json();
-        setPendingDeposits(data.pending || []);
+      if (depositsRes.status === 'fulfilled') {
+        setPendingDeposits(depositsRes.value.data.pending || []);
+      } else {
+        console.error('Failed to fetch deposits:', depositsRes.reason);
       }
-      if (withdrawalsRes.ok) {
-        const data = await withdrawalsRes.json();
-        setPendingWithdrawals(data.pending || []);
+      
+      if (withdrawalsRes.status === 'fulfilled') {
+        setPendingWithdrawals(withdrawalsRes.value.data.pending || []);
+      } else {
+        console.error('Failed to fetch withdrawals:', withdrawalsRes.reason);
+      }
+      
+      // Set error only if both failed
+      if (depositsRes.status === 'rejected' && withdrawalsRes.status === 'rejected') {
+        setError('Failed to load pending approvals');
       }
     } catch (err) {
       console.error('Failed to fetch pending:', err);
+      setError(getErrorMessage(err, 'Failed to load pending approvals'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPending();
+  }, [fetchPending]);
 
   const handleAction = async (orderId, action) => {
     if (action === 'reject' && !rejectReason.trim()) {
@@ -71,29 +80,18 @@ const AdminApprovals = () => {
 
     setProcessing(true);
     try {
-      const res = await fetch(`${API_BASE}/api/v1/admin/approvals/${orderId}/action`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          action,
-          reason: action === 'reject' ? rejectReason : undefined
-        })
-      });
-
-      if (res.ok) {
-        toast.success(`Order ${action}d successfully`);
-        setSelectedOrder(null);
-        setRejectReason('');
-        fetchPending();
-      } else {
-        const data = await res.json();
-        toast.error(data.detail || `Failed to ${action} order`);
-      }
+      await approvalsApi.performAction(
+        orderId, 
+        action, 
+        action === 'reject' ? rejectReason : ''
+      );
+      
+      toast.success(`Order ${action}d successfully`);
+      setSelectedOrder(null);
+      setRejectReason('');
+      fetchPending();
     } catch (err) {
-      toast.error(`Error ${action}ing order`);
+      toast.error(getErrorMessage(err, `Failed to ${action} order`));
     } finally {
       setProcessing(false);
     }
