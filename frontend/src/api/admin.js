@@ -270,6 +270,22 @@ export const promoCodesApi = {
 };
 
 // ============================================
+// REFERRALS
+// ============================================
+export const referralsApi = {
+  getDashboard: () =>
+    http.get('/admin/referrals/dashboard'),
+  
+  getLedger: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    const queryStr = query.toString();
+    return http.get(`/admin/referrals/ledger${queryStr ? '?' + queryStr : ''}`);
+  },
+};
+
+// ============================================
 // REPORTS
 // ============================================
 export const reportsApi = {
