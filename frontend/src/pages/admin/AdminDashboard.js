@@ -65,12 +65,32 @@ const AdminDashboard = () => {
     fetchData();
   }, [fetchData]);
 
+  // Loading State
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 animate-spin text-emerald-500 mx-auto mb-3" />
           <p className="text-gray-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error && !data) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <h2 className="text-xl font-semibold text-white mb-2">Failed to Load Dashboard</h2>
+          <p className="text-gray-400 mb-4">{error}</p>
+          <button 
+            onClick={fetchData}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
