@@ -135,9 +135,6 @@ const AdminPromoCodes = () => {
       if (action === 'disable') {
         await promoCodesApi.disable(codeId);
         toast.success('Promo code disabled');
-      } else if (action === 'enable') {
-        await promoCodesApi.enable(codeId);
-        toast.success('Promo code enabled');
       } else if (action === 'delete') {
         await promoCodesApi.delete(codeId);
         toast.success('Promo code deleted');
