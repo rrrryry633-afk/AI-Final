@@ -95,12 +95,12 @@ const AdminPromoDetail = () => {
         await promoCodesApi.enable(codeId);
         toast.success('Promo code enabled');
       }
-      closeConfirmation();
       fetchPromoCode();
     } catch (err) {
       toast.error(getErrorMessage(err, `Failed to ${action} promo code`));
     } finally {
       setActionLoading(false);
+      closeConfirmation();
     }
   };
 
