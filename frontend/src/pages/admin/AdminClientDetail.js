@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
+import { toast } from 'sonner';
 import { 
   ArrowLeft, User, Ban, CheckCircle, Lock, Unlock, Key, DollarSign, 
   TrendingUp, TrendingDown, Plus, Eye, EyeOff, Shield, Save, 
   AlertTriangle, Settings, Clock, ArrowDown, ArrowUp, Gift, XCircle,
-  BarChart3
+  BarChart3, RefreshCw, AlertCircle
 } from 'lucide-react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+// Centralized Admin API
+import { usersApi, gamesApi, analyticsApi, getErrorMessage } from '../../api/admin';
 
 const AdminClientDetail = () => {
   const { clientId } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [clientData, setClientData] = useState(null);
   const [showCredModal, setShowCredModal] = useState(false);
   const [credForm, setCredForm] = useState({ game_id: '', game_user_id: '', game_password: '' });
@@ -32,57 +32,41 @@ const AdminClientDetail = () => {
   const [clientAnalytics, setClientAnalytics] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    fetchClientDetail();
-    fetchGames();
-    fetchClientOverrides();
-    fetchActivityTimeline();
-    fetchClientAnalytics();
-  }, [clientId]);
-
-  const fetchClientDetail = async () => {
+  const fetchClientDetail = useCallback(async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/v1/admin/clients/${clientId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await usersApi.getById(clientId);
       setClientData(response.data);
-    } catch (error) {
-      console.error('Failed to fetch client:', error);
+    } catch (err) {
+      console.error('Failed to fetch client:', err);
+      setError(getErrorMessage(err, 'Failed to load client details'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [clientId]);
 
-  const fetchClientAnalytics = async () => {
+  const fetchClientAnalytics = useCallback(async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/v1/admin/analytics/client/${clientId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await analyticsApi.getClientAnalytics(clientId);
       setClientAnalytics(response.data);
-    } catch (error) {
-      console.error('Failed to fetch client analytics:', error);
+    } catch (err) {
+      console.error('Failed to fetch client analytics:', err);
     }
-  };
+  }, [clientId]);
 
-  const fetchGames = async () => {
+  const fetchGames = useCallback(async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/v1/admin/games`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      // Handle both array and object response structures
+      const response = await gamesApi.getAll();
       const gamesData = Array.isArray(response.data) ? response.data : (response.data.games || []);
       setGames(gamesData);
-    } catch (error) {
-      console.error('Failed to fetch games:', error);
+    } catch (err) {
+      console.error('Failed to fetch games:', err);
       setGames([]);
     }
-  };
+  }, []);
 
-  const fetchClientOverrides = async () => {
+  const fetchClientOverrides = useCallback(async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/v1/admin/clients/${clientId}/overrides`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await usersApi.getOverrides(clientId);
       if (response.data) {
         setOverrides({
           custom_deposit_bonus: response.data.custom_deposit_bonus,
@@ -93,63 +77,64 @@ const AdminClientDetail = () => {
           withdraw_disabled: response.data.withdraw_disabled || false
         });
       }
-    } catch (error) {
-      console.error('Failed to fetch overrides:', error);
+    } catch (err) {
+      console.error('Failed to fetch overrides:', err);
     }
-  };
+  }, [clientId]);
 
-  const fetchActivityTimeline = async () => {
+  const fetchActivityTimeline = useCallback(async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/v1/admin/clients/${clientId}/activity`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await usersApi.getActivity(clientId);
       setActivityTimeline(response.data.activities || []);
-    } catch (error) {
-      console.error('Failed to fetch activity:', error);
+    } catch (err) {
+      console.error('Failed to fetch activity:', err);
     }
-  };
+  }, [clientId]);
+
+  useEffect(() => {
+    fetchClientDetail();
+    fetchGames();
+    fetchClientOverrides();
+    fetchActivityTimeline();
+    fetchClientAnalytics();
+  }, [fetchClientDetail, fetchGames, fetchClientOverrides, fetchActivityTimeline, fetchClientAnalytics]);
 
   const handleSaveOverrides = async () => {
     try {
-      await axios.put(`${BACKEND_URL}/api/v1/admin/clients/${clientId}/overrides`, overrides, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      alert('Client overrides saved successfully');
-    } catch (error) {
-      alert('Failed to save overrides');
+      await usersApi.updateOverrides(clientId, overrides);
+      toast.success('Client overrides saved successfully');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to save overrides'));
     }
   };
 
   const handleStatusUpdate = async (newStatus) => {
     try {
-      await axios.put(`${BACKEND_URL}/api/v1/admin/clients/${clientId}`, { status: newStatus }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await usersApi.update(clientId, { status: newStatus });
+      toast.success(`Client status updated to ${newStatus}`);
       fetchClientDetail();
-    } catch (error) {
-      alert('Failed to update status');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update status'));
     }
   };
 
   const handleLockToggle = async (field, value) => {
     try {
-      await axios.put(`${BACKEND_URL}/api/v1/admin/clients/${clientId}`, { [field]: value }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await usersApi.update(clientId, { [field]: value });
+      toast.success('Setting updated');
       fetchClientDetail();
-    } catch (error) {
-      alert('Failed to update');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update'));
     }
   };
 
   const handleVisibilityChange = async (newLevel) => {
     try {
-      await axios.put(`${BACKEND_URL}/api/v1/admin/clients/${clientId}`, { visibility_level: newLevel }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await usersApi.update(clientId, { visibility_level: newLevel });
+      toast.success('Visibility updated');
       fetchClientDetail();
-    } catch (error) {
-      alert('Failed to update visibility');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update visibility'));
     }
   };
 
