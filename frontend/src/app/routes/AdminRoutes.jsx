@@ -80,6 +80,7 @@ export const AdminRoutes = () => {
           {/* Referrals & Promos */}
           <Route path="referrals" element={<AdminReferrals />} />
           <Route path="promo-codes" element={<AdminPromoCodes />} />
+          <Route path="promo-codes/:codeId" element={<AdminPromoDetail />} />
           
           {/* Balance Control */}
           <Route path="balance-control" element={<AdminBalanceControl />} />
