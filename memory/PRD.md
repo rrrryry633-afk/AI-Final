@@ -158,10 +158,91 @@ All client pages now use **ONLY** `/src/api/http.js`:
 - **Admin**: `admin` / `admin123`
 
 ## Known Issues
-- Backend requires PostgreSQL (unavailable in preview environment)
-- Pre-existing ESLint warnings in legacy admin pages
+- Pre-existing ESLint warnings in legacy admin pages (nested component definitions)
+- Chart warning about width/height being -1 (chart still renders correctly)
 
 ## Important Notes
 - **Backend is FROZEN** - Do not modify
 - **All client pages migrated** - Use http.js only
 - **Portal pages preserved** - For backward compatibility only
+- **All admin pages migrated** - Use /app/frontend/src/api/admin.js only
+
+---
+
+## PHASE 8: P0 ADMIN PANEL FIXES - COMPLETE ✅ (Jan 18, 2026)
+
+### P0 Tasks Completed:
+
+#### P0-1: Fix All Broken Admin API Connections ✅
+- Created centralized admin API client at `/app/frontend/src/api/admin.js`
+- Migrated all admin pages to use centralized API instead of direct fetch/axios calls
+- Added proper error handling and loading states to all admin pages
+
+#### P0-2: Implement Admin Dashboard ✅
+- Dashboard loads real data from `/api/v1/admin/dashboard` endpoint
+- Displays Today's Money Flow (Deposits In, Withdrawals Out, Net Profit)
+- Platform Performance Trend chart
+- Risk & Exposure snapshot
+- Referral Program Growth Tracking section
+
+#### P0-3: Implement Critical User Management ✅
+- AdminClients page lists users with search and status filter
+- AdminClientDetail page shows:
+  - Client overview (balance, financial summary)
+  - Analytics tab with client-specific metrics
+  - Credentials management
+  - Client overrides (bonus settings, withdrawal locks)
+  - Activity timeline
+- User status actions (suspend/ban/activate) working
+
+#### P0-4: Implement Finance & Cashflow Control ✅
+- AdminOrders page with tabs (All/Deposits/Withdrawals/Pending/Voided)
+- AdminApprovals page for withdrawal queue (approve/reject)
+- AdminReports page with:
+  - Balance Flow report
+  - Profit By Game report  
+  - Voids report
+  - Risk & Exposure analysis
+  - Advanced metrics
+
+#### P0-5: Enforce Audit Logging ✅
+- AdminAuditLogs page displays all admin actions
+- Pagination and action filter working
+- Fixed bug where log.details object was rendered directly as React child
+
+### Files Modified/Created:
+
+| File | Changes |
+|------|---------|
+| `/frontend/src/api/admin.js` | **NEW** Centralized admin API client with all admin endpoints |
+| `/frontend/src/pages/admin/AdminDashboard.js` | Migrated to admin API, added error states |
+| `/frontend/src/pages/admin/AdminClients.js` | Migrated to admin API, added refresh/error states |
+| `/frontend/src/pages/admin/AdminClientDetail.js` | Migrated to admin API, added toast notifications |
+| `/frontend/src/pages/admin/AdminOrders.js` | Already using admin API (refactored earlier) |
+| `/frontend/src/pages/admin/AdminApprovals.js` | Migrated to admin API, added error states |
+| `/frontend/src/pages/admin/AdminReports.js` | Migrated to admin API, added error states |
+| `/frontend/src/pages/admin/AdminAuditLogs.js` | Fixed log.details rendering bug |
+
+### Admin API Client Structure:
+```
+adminApi = {
+  dashboard: { getDashboard(), getStats() }
+  users: { getAll(), getById(), update(), updateStatus(), getOverrides(), updateOverrides(), getActivity(), getCredentials(), assignCredential() }
+  analytics: { getClientAnalytics(), getRiskSnapshot(), getRiskExposure(), getPlatformTrends(), getAdvancedMetrics() }
+  orders: { getAll(), getById(), approve(), reject() }
+  approvals: { getPending(), performAction(), ... }
+  system: { ... }
+  settings: { ... }
+  games: { ... }
+  referrals: { getDashboard(), getLedger() }
+  reports: { getBalanceFlow(), getProfitByGame(), getVoids(), ... }
+  audit: { getLogs() }
+  balanceControl: { ... }
+}
+```
+
+### Testing Results:
+- Frontend: 100% success rate
+- All P0 features verified working
+- 1 bug fixed during testing (AdminAuditLogs.js)
+- Test report: `/app/test_reports/iteration_3.json`
