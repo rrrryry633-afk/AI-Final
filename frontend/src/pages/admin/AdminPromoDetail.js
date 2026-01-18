@@ -355,24 +355,18 @@ const AdminPromoDetail = () => {
           <Card className="bg-gray-900 border-gray-800 w-full max-w-md mx-4">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                {confirmModal.action === 'disable' ? (
-                  <Ban className="w-5 h-5 text-orange-400" />
-                ) : (
-                  <Power className="w-5 h-5 text-emerald-400" />
-                )}
-                Confirm {confirmModal.action === 'disable' ? 'Disable' : 'Enable'}
+                <Ban className="w-5 h-5 text-orange-400" />
+                Confirm Disable
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-400">
-                Are you sure you want to {confirmModal.action} promo code{' '}
+                Are you sure you want to disable promo code{' '}
                 <span className="text-purple-400 font-mono">{promoCode.code}</span>?
               </p>
-              {confirmModal.action === 'disable' && (
-                <p className="text-orange-400 text-sm">
-                  Users will no longer be able to redeem this code.
-                </p>
-              )}
+              <p className="text-orange-400/80 text-sm">
+                Users will no longer be able to redeem this code. This action cannot be undone.
+              </p>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={closeConfirmation} disabled={actionLoading}>
                   Cancel
@@ -380,11 +374,7 @@ const AdminPromoDetail = () => {
                 <Button 
                   onClick={executeAction}
                   disabled={actionLoading}
-                  className={
-                    confirmModal.action === 'disable' 
-                      ? 'bg-orange-600 hover:bg-orange-700' 
-                      : 'bg-emerald-600 hover:bg-emerald-700'
-                  }
+                  className="bg-orange-600 hover:bg-orange-700"
                   data-testid="confirm-action-btn"
                 >
                   {actionLoading ? (
