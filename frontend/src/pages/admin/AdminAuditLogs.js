@@ -164,7 +164,9 @@ const AdminAuditLogs = () => {
                           </span>
                         </div>
                         <p className="text-gray-400 text-sm mt-1 truncate">
-                          {log.details || log.description || `${log.action} on ${log.entity_type || 'entity'}`}
+                          {typeof log.details === 'string' 
+                            ? log.details 
+                            : (log.description || `${log.action} on ${log.entity_type || 'entity'}`)}
                         </p>
                         {log.target_id && (
                           <p className="text-gray-600 text-xs mt-1 font-mono">
