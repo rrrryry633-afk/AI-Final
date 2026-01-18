@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { toast } from 'sonner';
 import { 
-  Gift, ArrowLeft, RefreshCw, Ban, Power, AlertCircle, User,
+  Gift, ArrowLeft, RefreshCw, Ban, AlertCircle, User,
   Calendar, DollarSign, Hash, Clock, CheckCircle, XCircle
 } from 'lucide-react';
 
