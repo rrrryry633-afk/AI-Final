@@ -18,6 +18,7 @@ const AdminGames = React.lazy(() => import('../../pages/admin/AdminGames'));
 const AdminRulesEngine = React.lazy(() => import('../../pages/admin/AdminRulesEngine'));
 const AdminReferrals = React.lazy(() => import('../../pages/admin/AdminReferrals'));
 const AdminPromoCodes = React.lazy(() => import('../../pages/admin/AdminPromoCodes'));
+const AdminPromoDetail = React.lazy(() => import('../../pages/admin/AdminPromoDetail'));
 const AdminReports = React.lazy(() => import('../../pages/admin/AdminReports'));
 const AdminSystem = React.lazy(() => import('../../pages/admin/AdminSystem'));
 const AdminAuditLogs = React.lazy(() => import('../../pages/admin/AdminAuditLogs'));
