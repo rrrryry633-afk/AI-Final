@@ -142,12 +142,12 @@ const AdminPromoCodes = () => {
         await promoCodesApi.delete(codeId);
         toast.success('Promo code deleted');
       }
-      closeConfirmation();
       fetchCodes();
     } catch (err) {
       toast.error(getErrorMessage(err, `Failed to ${action} promo code`));
     } finally {
       setActionLoading(false);
+      closeConfirmation();
     }
   };
 
