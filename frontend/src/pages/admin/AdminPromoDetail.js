@@ -84,20 +84,14 @@ const AdminPromoDetail = () => {
   };
 
   const executeAction = async () => {
-    const { action } = confirmModal;
     setActionLoading(true);
     
     try {
-      if (action === 'disable') {
-        await promoCodesApi.disable(codeId);
-        toast.success('Promo code disabled');
-      } else if (action === 'enable') {
-        await promoCodesApi.enable(codeId);
-        toast.success('Promo code enabled');
-      }
+      await promoCodesApi.disable(codeId);
+      toast.success('Promo code disabled');
       fetchPromoCode();
     } catch (err) {
-      toast.error(getErrorMessage(err, `Failed to ${action} promo code`));
+      toast.error(getErrorMessage(err, 'Failed to disable promo code'));
     } finally {
       setActionLoading(false);
       closeConfirmation();
