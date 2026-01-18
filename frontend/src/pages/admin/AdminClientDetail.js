@@ -140,34 +140,52 @@ const AdminClientDetail = () => {
 
   const handleAssignCredential = async () => {
     if (!credForm.game_id || !credForm.game_user_id || !credForm.game_password) {
-      alert('Please fill all fields');
+      toast.error('Please fill all fields');
       return;
     }
     try {
-      await axios.post(`${BACKEND_URL}/api/v1/admin/clients/${clientId}/credentials`, {
+      await usersApi.assignCredential(clientId, {
         client_id: clientId,
         ...credForm
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       setShowCredModal(false);
       setCredForm({ game_id: '', game_user_id: '', game_password: '' });
+      toast.success('Credentials assigned successfully');
       fetchClientDetail();
-    } catch (error) {
-      alert('Failed to assign credentials');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to assign credentials'));
     }
   };
 
+  // Loading State
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+        <RefreshCw className="w-8 h-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  // Error State
+  if (error && !clientData) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <p className="text-red-400 mb-4">{error}</p>
+          <button 
+            onClick={() => navigate('/admin/clients')}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
+          >
+            Back to Clients
+          </button>
+        </div>
       </div>
     );
   }
 
   if (!clientData) {
-    return <div className="text-white">Client not found</div>;
+    return <div className="text-white text-center py-8">Client not found</div>;
   }
 
   const { client, financial_summary, credentials, recent_transactions, recent_orders } = clientData;
