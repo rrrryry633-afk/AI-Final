@@ -380,7 +380,7 @@ const AdminPromoDetail = () => {
                   {actionLoading ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   ) : (
-                    confirmModal.action === 'disable' ? 'Disable' : 'Enable'
+                    'Disable'
                   )}
                 </Button>
               </div>
