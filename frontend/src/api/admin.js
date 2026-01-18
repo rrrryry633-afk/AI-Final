@@ -38,6 +38,9 @@ export const usersApi = {
   getById: (userId) => 
     http.get(`/admin/clients/${userId}`),
   
+  update: (userId, data) =>
+    http.put(`/admin/clients/${userId}`, data),
+  
   updateStatus: (userId, status, reason = '') =>
     http.post(`/admin/clients/${userId}/status`, { status, reason }),
   
@@ -52,6 +55,47 @@ export const usersApi = {
   
   activate: (userId) =>
     http.post(`/admin/clients/${userId}/status`, { status: 'active' }),
+  
+  // Overrides
+  getOverrides: (userId) =>
+    http.get(`/admin/clients/${userId}/overrides`),
+  
+  updateOverrides: (userId, overrides) =>
+    http.put(`/admin/clients/${userId}/overrides`, overrides),
+  
+  // Activity
+  getActivity: (userId) =>
+    http.get(`/admin/clients/${userId}/activity`),
+  
+  // Credentials
+  getCredentials: (userId) =>
+    http.get(`/admin/clients/${userId}/credentials`),
+  
+  assignCredential: (userId, credential) =>
+    http.post(`/admin/clients/${userId}/credentials`, credential),
+};
+
+// ============================================
+// ANALYTICS
+// ============================================
+export const analyticsApi = {
+  getClientAnalytics: (userId) =>
+    http.get(`/admin/analytics/client/${userId}`),
+  
+  getGameAnalytics: (gameName) =>
+    http.get(`/admin/analytics/game/${gameName}`),
+  
+  getRiskSnapshot: () =>
+    http.get('/admin/analytics/risk-snapshot'),
+  
+  getRiskExposure: () =>
+    http.get('/admin/analytics/risk-exposure'),
+  
+  getPlatformTrends: (days = 7) =>
+    http.get(`/admin/analytics/platform-trends?days=${days}`),
+  
+  getAdvancedMetrics: () =>
+    http.get('/admin/analytics/advanced-metrics'),
 };
 
 // ============================================
