@@ -310,14 +310,28 @@ export const perksApi = {
 // PROMO CODES
 // ============================================
 export const promoCodesApi = {
-  getAll: () =>
-    http.get('/admin/promo-codes'),
+  getAll: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.status) query.append('status', params.status);
+    if (params.search) query.append('search', params.search);
+    const queryStr = query.toString();
+    return http.get(`/admin/promo-codes${queryStr ? '?' + queryStr : ''}`);
+  },
+  
+  getById: (codeId) =>
+    http.get(`/admin/promo-codes/${codeId}`),
   
   create: (data) =>
     http.post('/admin/promo-codes', data),
   
   disable: (codeId) =>
     http.post(`/admin/promo-codes/${codeId}/disable`),
+  
+  enable: (codeId) =>
+    http.post(`/admin/promo-codes/${codeId}/enable`),
+  
+  delete: (codeId) =>
+    http.delete(`/admin/promo-codes/${codeId}`),
   
   getRedemptions: (codeId) =>
     http.get(`/admin/promo-codes/${codeId}/redemptions`),
