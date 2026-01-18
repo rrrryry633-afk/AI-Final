@@ -325,10 +325,10 @@ export const promoCodesApi = {
     http.post('/admin/promo-codes', data),
   
   disable: (codeId) =>
-    http.post(`/admin/promo-codes/${codeId}/disable`),
+    http.put(`/admin/promo-codes/${codeId}/disable`),
   
   enable: (codeId) =>
-    http.post(`/admin/promo-codes/${codeId}/enable`),
+    http.put(`/admin/promo-codes/${codeId}/enable`),
   
   delete: (codeId) =>
     http.delete(`/admin/promo-codes/${codeId}`),
