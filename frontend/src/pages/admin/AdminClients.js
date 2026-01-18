@@ -58,29 +58,66 @@ const AdminClients = () => {
     }
   };
 
-  if (loading) {
+  // Loading State
+  if (loading && clients.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+        <RefreshCw className="w-8 h-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  // Error State
+  if (error && clients.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <p className="text-red-400 mb-4">{error}</p>
+          <button 
+            onClick={fetchClients}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="admin-clients-page">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Clients</h1>
           <p className="text-gray-400 text-sm">{clients.length} total clients</p>
         </div>
-        <button 
-          onClick={() => navigate('/admin/clients/new')}
-          className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-        >
-          <Users className="w-4 h-4" />
-          Add Client
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={fetchClients}
+            disabled={loading}
+            className="p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button 
+            onClick={() => navigate('/admin/clients/new')}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+          >
+            <Users className="w-4 h-4" />
+            Add Client
+          </button>
+        </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={fetchClients} className="text-red-300 hover:text-white">Retry</button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
