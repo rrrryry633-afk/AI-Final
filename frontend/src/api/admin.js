@@ -349,6 +349,12 @@ export const reportsApi = {
   getPerformance: (days = 7) =>
     http.get(`/admin/reports/performance?days=${days}`),
   
+  getProfitByGame: () =>
+    http.get('/admin/reports/profit-by-game'),
+  
+  getVoids: (days = 30) =>
+    http.get(`/admin/reports/voids?days=${days}`),
+  
   getReferralStats: () =>
     http.get('/admin/reports/referrals'),
   
