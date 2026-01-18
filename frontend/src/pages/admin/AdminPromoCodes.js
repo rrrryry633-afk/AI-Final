@@ -12,7 +12,7 @@ import { Label } from '../../components/ui/label';
 import { toast } from 'sonner';
 import { 
   Gift, Plus, RefreshCw, Ban, Eye, Search, CheckCircle, 
-  AlertCircle, X, Trash2, Power
+  AlertCircle, X, Trash2
 } from 'lucide-react';
 
 // Centralized Admin API
