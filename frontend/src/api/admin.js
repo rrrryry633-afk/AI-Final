@@ -342,6 +342,7 @@ const adminApi = {
   games: gamesApi,
   perks: perksApi,
   promoCodes: promoCodesApi,
+  referrals: referralsApi,
   reports: reportsApi,
   audit: auditApi,
   balanceControl: balanceControlApi,
