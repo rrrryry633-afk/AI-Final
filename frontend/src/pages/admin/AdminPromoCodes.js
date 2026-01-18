@@ -442,9 +442,8 @@ const AdminPromoCodes = () => {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 {confirmModal.action === 'disable' && <Ban className="w-5 h-5 text-orange-400" />}
-                {confirmModal.action === 'enable' && <CheckCircle className="w-5 h-5 text-emerald-400" />}
                 {confirmModal.action === 'delete' && <Trash2 className="w-5 h-5 text-red-400" />}
-                Confirm {confirmModal.action === 'disable' ? 'Disable' : confirmModal.action === 'enable' ? 'Enable' : 'Delete'}
+                Confirm {confirmModal.action === 'disable' ? 'Disable' : 'Delete'}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -452,6 +451,9 @@ const AdminPromoCodes = () => {
                 Are you sure you want to {confirmModal.action} promo code{' '}
                 <span className="text-purple-400 font-mono">{confirmModal.codeName}</span>?
               </p>
+              {confirmModal.action === 'disable' && (
+                <p className="text-orange-400/80 text-sm">Note: Disabled codes cannot be re-enabled.</p>
+              )}
               {confirmModal.action === 'delete' && (
                 <p className="text-red-400 text-sm">This action cannot be undone.</p>
               )}
@@ -464,16 +466,14 @@ const AdminPromoCodes = () => {
                   disabled={actionLoading}
                   className={
                     confirmModal.action === 'delete' ? 'bg-red-600 hover:bg-red-700' :
-                    confirmModal.action === 'disable' ? 'bg-orange-600 hover:bg-orange-700' :
-                    'bg-emerald-600 hover:bg-emerald-700'
+                    'bg-orange-600 hover:bg-orange-700'
                   }
                   data-testid="confirm-action-btn"
                 >
                   {actionLoading ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   ) : (
-                    confirmModal.action === 'disable' ? 'Disable' : 
-                    confirmModal.action === 'enable' ? 'Enable' : 'Delete'
+                    confirmModal.action === 'disable' ? 'Disable' : 'Delete'
                   )}
                 </Button>
               </div>
