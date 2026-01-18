@@ -142,7 +142,7 @@ const AdminDashboard = () => {
       <div>
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Zap className="w-5 h-5 text-emerald-400" />
-          Today's Money Flow
+          Today&apos;s Money Flow
         </h2>
         <div className="grid grid-cols-3 gap-4">
           {/* Deposits In */}
