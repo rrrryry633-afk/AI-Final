@@ -29,14 +29,14 @@ Successfully set up and configured the gaming platform with separate login flows
 ## 🔗 External Testing Links
 
 ### Production URLs (Based on .env configuration)
-Base URL: `https://finui-refresh-1.preview.emergentagent.com`
+Base URL: `https://admin-panel-fix-73.preview.emergentagent.com`
 
 | Purpose | URL | Has Signup? |
 |---------|-----|-------------|
-| **Client Login** | `https://finui-refresh-1.preview.emergentagent.com/login` | ✅ Yes |
-| **Admin Login** | `https://finui-refresh-1.preview.emergentagent.com/admin/login` | ❌ No |
-| **Public Games** | `https://finui-refresh-1.preview.emergentagent.com/games` | N/A (Public) |
-| **Register** | `https://finui-refresh-1.preview.emergentagent.com/register` | - |
+| **Client Login** | `https://admin-panel-fix-73.preview.emergentagent.com/login` | ✅ Yes |
+| **Admin Login** | `https://admin-panel-fix-73.preview.emergentagent.com/admin/login` | ❌ No |
+| **Public Games** | `https://admin-panel-fix-73.preview.emergentagent.com/games` | N/A (Public) |
+| **Register** | `https://admin-panel-fix-73.preview.emergentagent.com/register` | - |
 
 ---
 
