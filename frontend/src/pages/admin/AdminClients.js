@@ -1,39 +1,40 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
-import { Search, Filter, Users, Eye, Ban, CheckCircle } from 'lucide-react';
+import { Search, Users, Eye, RefreshCw, AlertCircle } from 'lucide-react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+// Centralized Admin API
+import { usersApi, getErrorMessage } from '../../api/admin';
 
 const AdminClients = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [clients, setClients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  useEffect(() => {
-    fetchClients();
-  }, [statusFilter]);
-
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      let url = `${BACKEND_URL}/api/v1/admin/clients`;
+      const params = {};
       if (statusFilter !== 'all') {
-        url += `?status_filter=${statusFilter}`;
+        params.status = statusFilter;
       }
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await usersApi.getAll(params);
       setClients(response.data.clients || []);
-    } catch (error) {
-      console.error('Failed to fetch clients:', error);
+    } catch (err) {
+      console.error('Failed to fetch clients:', err);
+      setError(getErrorMessage(err, 'Failed to load clients'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
 
   const filteredClients = (clients || []).filter(client => {
     const searchLower = searchTerm.toLowerCase();
